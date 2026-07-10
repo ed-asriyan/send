@@ -1,0 +1,27 @@
+# Send
+Send is a secure, browser-based client for distributing and retrieving encrypted files via the SimpleX XFTP network.
+
+## Your files, perfectly private
+We don't just send your file. Your file is encrypted right on your device, sliced into small chunks, and scattered across independent servers owned by different operators. No single server receives the whole file, so no one in the world can know its contents or even guess its real size.
+
+## Why is it secure?
+- **Scattered across different operators:** The file is not stored in one place. It is cut into chunks that are sent to different independent servers. Each server's operator only sees a part of the encrypted file and cannot even guess the real size. The operator doesn't know on which other servers the rest of the chunks are located.
+- **The key is only in the link:** Instead of the content of these chunks, the servers only see encrypted noise. The decryption key is hidden in the link itself, so only you and your recipient can open the file.
+- **Total anonymity:** No accounts — no registration. When the recipient opens the link, the file pieces are downloaded and glued back together only on their device.
+
+## How it works under the hood
+When you send a file, the following happens:
+1. **Availability Check:** The browser queries enabled XFTP servers and filters out the unreachable ones.
+2. **Fragmentation:** The browser slices the file into pieces (chunks).
+3. **Encryption & Parallel Dispatch:** Each chunk is encrypted and uploaded to a random server from the pool of available servers.
+4. **Meta-file Generation:** Once all chunks are uploaded, the browser creates an encrypted meta-file indicating where all chunks are located and their decryption keys.
+5. **URL Hashing & Zero-Knowledge Transport:** The key for the meta-file is placed into the hash of your link (after the `#` sign). Browsers never send the hash to the host server.
+
+Downloading works in reverse: the browser reads the hash, downloads the meta-file, decrypts it, parallelly downloads chunks from the servers, decrypts them, and reassembles the file completely in your device's memory.
+
+## Features at a Glance:
+- Peer-to-peer file routing over decentralized XFTP servers.
+- Client-side encryption: keys never leave the browser.
+- Trustless network: relay servers do not know the contents or the whole file.
+- Zero-knowledge transport: the decryption keys are shared Out-Of-Band via the URL fragment (`#`).
+- Open Source and transparent architecture.
