@@ -1,1 +1,3 @@
-# simplex-send
+# Send
+
+https://send.asriyan.me

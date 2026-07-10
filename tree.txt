@@ -1,0 +1,35 @@
+.
+├── app
+│   ├── index.html
+│   ├── jsconfig.json
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── public
+│   │   ├── favicon.svg
+│   │   └── icons.svg
+│   ├── README.md
+│   ├── src
+│   │   ├── app.css
+│   │   ├── App.svelte
+│   │   ├── assets
+│   │   │   ├── hero.png
+│   │   │   ├── svelte.svg
+│   │   │   └── vite.svg
+│   │   ├── lib
+│   │   │   └── Counter.svelte
+│   │   └── main.js
+│   ├── svelte.config.js
+│   └── vite.config.mjs
+├── eslint.config.js
+├── lib
+│   ├── package.json
+│   ├── src
+│   │   ├── index.ts
+│   │   └── ports.ts
+│   └── tsconfig.json
+├── package.json
+├── package-lock.json
+├── README.md
+└── tree.txt
+
+7 directories, 25 files

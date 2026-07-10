@@ -1,0 +1,120 @@
+{
+  "app": {
+    "initializing": "Initializing...",
+    "locating_map": "Getting metadata...",
+    "unknown_file": "Unknown file",
+    "downloading": "Downloading: {filename}",
+    "decrypting": "Decrypting and reassembling file pieces...",
+    "download_error": "Download error: {error}",
+    "uploading": "Uploading: {filename}",
+    "distributing": "Scattering encrypted file pieces across the network...",
+    "upload_error": "Upload error: {error}",
+    "how_it_works": "Why is it secure?",
+    "powered_by": "Powered by SimpleX Network",
+    "source_code": "Source Code",
+    "init_error": "Initialization error: {error}"
+  },
+  "upload": {
+    "preparing": "Preparing upload...",
+    "title": "Upload a file",
+    "subtitle": "Drag and drop, or click to browse",
+    "processing": "Processing...",
+    "button": "Browse Files"
+  },
+  "sidebar": {
+    "title": "XFTP Send",
+    "servers": "Routing servers",
+    "status": {
+      "checking": "Checking",
+      "offline": "Offline",
+      "online": "Online"
+    },
+    "tooltips": {
+      "view_info": "View Server Info",
+      "check": "Check",
+      "remove": "Remove"
+    },
+    "inputs": {
+      "placeholder": "xftp://identity@new.servers.net",
+      "add_server": "Add server",
+      "adding": "..."
+    }
+  },
+  "confirm": {
+    "hide_servers": "Hide servers",
+    "view_servers": "View servers",
+    "cancel": "Cancel",
+    "starting": "Starting...",
+    "start_download": "Start Download"
+  },
+  "complete": {
+    "title": "Download Complete",
+    "subtitle": "Your file has been successfully saved to your device.",
+    "manual_prompt": "If the download didn't start automatically,",
+    "click_here": "click here",
+    "send_own": "Send your own file"
+  },
+  "no_servers": {
+    "title_active": "No active servers",
+    "title_empty": "No servers found",
+    "subtitle_active": "You don't have any reachable servers to upload your files. Please enable a server in the menu to continue.",
+    "subtitle_empty": "You haven't added any servers yet. Please add a server in the menu to start sharing files."
+  },
+  "result": {
+    "title": "Secure Link Ready",
+    "subtitle": "Anyone with this link can download the file. Typically files are stored for 2 days",
+    "copy": "Copy",
+    "share": "Share",
+    "share_title": "Secure Link",
+    "upload_another": "Upload another file"
+  },
+  "about": {
+    "title": "Your files, perfectly private.",
+    "intro": "We don't just send your file. We shred it into tiny encrypted file pieces and scatter them across multiple servers run by completely independent people. No single server holds the whole file, and no one can even guess its true size or contents.",
+    "split": {
+      "title": "Scattered file pieces",
+      "desc": "Your file is never stored in one piece. It is broken into random fragments and locked away on different independent servers."
+    },
+    "key": {
+      "title": "The key is only in the link",
+      "desc": "Servers only hold meaningless white noise. The decryption key is embedded in the link itself, so only you and your recipient can unlock it."
+    },
+    "anon": {
+      "title": "Total anonymity",
+      "desc": "No accounts. When someone opens your link, the file pieces are silently retrieved and glued back together only on their device."
+    },
+    "hood": {
+      "title": "Under the hood: How it works (For Geeks)",
+      "intro": "When you upload a file, the following happens:"
+    },
+    "steps": {
+      "availability": {
+        "title": "1. Availability Check:",
+        "desc": "First, the browser queries all enabled XFTP servers in your settings and filters out unreachable ones.",
+        "note": "Note: Servers are maintained by different independent operators, which eliminates single points of failure or compromise."
+      },
+      "sharding": {
+        "title": "2. Sharding and Encryption:",
+        "desc": "The file never leaves your device as a whole. Locally in the browser, it is sliced into small encrypted chunks (fragments)."
+      },
+      "dispatch": {
+        "title": "3. Parallel Dispatch:",
+        "desc": "Chunks are randomly distributed and uploaded simultaneously to active servers. No single server operator receives the entire file — only encrypted \"white noise\"."
+      },
+      "map": {
+        "title": "4. File Map:",
+        "desc": "After uploading the fragments, the browser creates a final meta-file. It contains the server addresses and the decryption keys for each individual chunk. This meta-file is also encrypted and uploaded to the network."
+      },
+      "hash": {
+        "title": "5. URL Hashing:",
+        "desc": "The decryption key for the meta-file itself is placed in your link's hash (everything after the `#`).",
+        "note": "This part of the link is never sent to any server when you click it."
+      }
+    },
+    "reverse": "Downloading works in exact reverse: When following the link, the browser reads the hash locally, downloads and decrypts the meta-file. It then pulls chunks from the required servers in parallel, decrypts them on the fly, and reassembles the file right in your device's memory.",
+    "got_it": "Got it"
+  },
+  "network": {
+    "total_progress": "Total progress:"
+  }
+}

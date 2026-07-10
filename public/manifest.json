@@ -1,0 +1,16 @@
+{
+  "name": "SimpleX Web Send",
+  "short_name": "SimpleX Send",
+  "description": "Send files securely using SimpleX Network",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#f0f4f8",
+  "theme_color": "#ffffff",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "192x192 512x512 any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
