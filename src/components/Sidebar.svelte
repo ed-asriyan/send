@@ -1,15 +1,19 @@
 <script lang="ts">
-  import type { XftpServer } from "../lib/models";
+  import { XftpServerAddress, type XftpServer } from "../lib/models";
+  import { trackEvent } from "../lib/tracking";
   import { fade, slide } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
   import { _ } from "../lib/i18n";
-  import LanguageSwitcher from "./LanguageSwitcher.svelte";
 
   interface Props {
     show?: boolean;
     isOpen: boolean;
     onClose: () => void;
     servers: XftpServer[];
+    useCommunityServers: boolean;
+    onToggleCommunityServers: (enabled: boolean) => void;
+    onFetchCommunity: () => Promise<void>;
+    onClearCommunity: () => void;
     onToggleServer: (address: string, enabled: boolean) => void;
     onRemoveServer: (address: string) => void;
     onRefreshServer: (address: string) => void;
@@ -21,6 +25,10 @@
     isOpen,
     onClose,
     servers,
+    useCommunityServers,
+    onToggleCommunityServers,
+    onFetchCommunity,
+    onClearCommunity,
     onToggleServer,
     onRemoveServer,
     onRefreshServer,
@@ -29,11 +37,22 @@
 
   let newServerInput = $state("");
   let isAdding = $state(false);
+  let isFetchingCommunity = $state(false);
+
+  let isNewServerValid = $derived.by(() => {
+    try {
+      XftpServerAddress.create(newServerInput.trim());
+      return true;
+    } catch {
+      return false;
+    }
+  });
 
   async function handleAddServer(e: Event) {
     e.preventDefault();
     const addr = newServerInput.trim();
-    if (addr) {
+    if (addr && isNewServerValid) {
+      trackEvent("add_server");
       isAdding = true;
       try {
         await onAddServer(addr);
@@ -118,7 +137,7 @@
               <div
                 class="text-sm font-medium text-slate-800 truncate font-mono"
               >
-                {srv.server.getDomain()}
+                {srv.server.url.hostname}
               </div>
               <div
                 class="text-xs {isChecking
@@ -146,7 +165,7 @@
               class="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
             >
               <a
-                href={"https://" + srv.server.getDomain()}
+                href={`https://${srv.server.url.hostname}`}
                 target="_blank"
                 rel="noopener noreferrer"
                 onclick={(e) => e.stopPropagation()}
@@ -189,34 +208,112 @@
                   ></path></svg
                 >
               </button>
-              <button
-                type="button"
-                onclick={(e) => {
-                  e.stopPropagation();
-                  onRemoveServer(srv.server.address);
-                }}
-                class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-white rounded-full transition-colors"
-                title={$_("sidebar.tooltips.remove")}
-              >
-                <svg
-                  class="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  ><path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    stroke-width="2"
-                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                  ></path></svg
+              {#if !srv.isCommunity}
+                <button
+                  type="button"
+                  onclick={(e) => {
+                    e.stopPropagation();
+                    onRemoveServer(srv.server.address);
+                  }}
+                  class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-white rounded-full transition-colors"
+                  title={$_("sidebar.tooltips.remove")}
                 >
-              </button>
+                  <svg
+                    class="w-4 h-4"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                    ><path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    ></path></svg
+                  >
+                </button>
+              {/if}
             </div>
           </div>
         {/each}
       </div>
 
-      <div class="p-6 shrink-0">
+      <div class="p-6 shrink-0 border-t border-white/20 mt-2">
+        <label
+          class="flex items-center gap-2 mb-3 cursor-pointer text-sm text-slate-700 font-medium group"
+        >
+          <input
+            type="checkbox"
+            checked={useCommunityServers}
+            onchange={(e) => onToggleCommunityServers(e.currentTarget.checked)}
+            class="w-4 h-4 text-indigo-600 rounded border-slate-300 focus:ring-indigo-500 transition-colors"
+          />
+          <span class="group-hover:text-indigo-600 transition-colors"
+            >{$_("sidebar.community_auto_fetch")}</span
+          >
+        </label>
+
+        <div class="flex gap-2 mb-4">
+          <button
+            type="button"
+            disabled={isFetchingCommunity}
+            onclick={async () => {
+              isFetchingCommunity = true;
+              try {
+                await onFetchCommunity();
+              } finally {
+                isFetchingCommunity = false;
+              }
+            }}
+            class="flex-1 px-3 py-2 text-xs rounded-full bg-white/20 hover:bg-white/40 border border-white/50 backdrop-blur-md shadow-sm transition-all text-slate-700 font-medium disabled:opacity-50 flex items-center justify-center hover:scale-[1.02] active:scale-95"
+          >
+            {#if isFetchingCommunity}
+              <svg
+                class="animate-spin -ml-1 mr-2 h-4 w-4 text-indigo-700"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                ></circle>
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                ></path>
+              </svg>
+              {$_("sidebar.community_fetching")}
+            {:else}
+              <span class="mr-1.5">🌍</span>
+              {$_("sidebar.community_fetch")}
+            {/if}
+          </button>
+          <button
+            type="button"
+            onclick={onClearCommunity}
+            class="px-3 py-2 text-xs rounded-full bg-white/20 hover:bg-red-50 hover:border-red-200 border border-white/50 backdrop-blur-md shadow-sm transition-all text-slate-700 hover:text-red-600 font-medium hover:scale-[1.02] active:scale-95 flex items-center justify-center"
+            title={$_("sidebar.community_clear")}
+          >
+            <svg
+              class="w-4 h-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              ><path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              ></path></svg
+            >
+          </button>
+        </div>
+
         <form onsubmit={handleAddServer} class="flex flex-col gap-3">
           <input
             type="text"
@@ -227,7 +324,7 @@
           />
           <button
             type="submit"
-            disabled={isAdding}
+            disabled={isAdding || !isNewServerValid}
             class="w-full bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium py-3 px-4 rounded-full transition-colors shadow-md shadow-slate-900/10 disabled:opacity-50"
           >
             {isAdding

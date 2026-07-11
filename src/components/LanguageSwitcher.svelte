@@ -1,6 +1,7 @@
 <script lang="ts">
   import { locale } from "../lib/i18n";
-  import { fade, scale } from "svelte/transition";
+  import { trackEvent } from "../lib/tracking";
+  import { scale } from "svelte/transition";
   import { onMount } from "svelte";
 
   let isOpen = $state(false);
@@ -22,6 +23,7 @@
   }
 
   function setLanguage(code: string) {
+    trackEvent("change_language", { language: code });
     $locale = code;
     isOpen = false;
   }

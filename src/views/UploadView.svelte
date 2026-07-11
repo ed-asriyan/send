@@ -1,5 +1,7 @@
 <script lang="ts">
   import { _ } from "../lib/i18n";
+  import { trackEvent } from "../lib/tracking";
+
   interface Props {
     onUpload: (file: File) => void | Promise<void>;
   }
@@ -59,7 +61,10 @@
       ? 'border-indigo-400 bg-indigo-50/50'
       : 'border-indigo-200/50 hover:bg-indigo-50/30 hover:border-indigo-400/50'}"
     onclick={() => {
-      if (!isUploading) fileInput.click();
+      if (!isUploading) {
+        trackEvent("click_upload");
+        fileInput.click();
+      }
     }}
     ondragover={handleDragOver}
     ondragleave={handleDragLeave}

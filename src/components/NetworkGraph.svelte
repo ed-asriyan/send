@@ -30,7 +30,7 @@
       const step = height / (progress.length + 1);
       const stats = item.progress;
       return {
-        name: item.server.getDomain(),
+        name: item.server.url.hostname,
         y: step * (i + 1),
         // Calculate percentage (0-100)
         percent: stats?.max ? Math.round((stats.current / stats.max) * 100) : 0,

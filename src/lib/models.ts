@@ -16,25 +16,27 @@ export class EventEmitter<T = any> {
 
 export class XftpServerAddress {
   readonly address: string;
+  readonly url: URL;
 
-  private constructor(address: string) {
-    this.address = address;
+  private constructor(url: URL) {
+    this.url = url;
+    this.address = decodeURIComponent(url.toString());
   }
 
   public static create(address: string): XftpServerAddress {
-    if (!XftpServerAddress.isValidAddress(address)) {
+    const url = new URL(address);
+    if (!XftpServerAddress.isValidAddress(url)) {
       throw new Error("Invalid address");
     }
-    return new XftpServerAddress(address);
+    return new XftpServerAddress(url);
   }
 
-  public getDomain(): string {
-    return this.address.split('@')[1];
-  }
-
-  private static isValidAddress(address: string): boolean {
-    // todo
-    return true;
+  private static isValidAddress(url: URL): boolean {
+    try {
+      return url.protocol === "xftp:" && url.username.length > 0 && url.hostname.length > 0 && url.pathname.length == 0;
+    } catch {
+      return false;
+    }
   }
 }
 
@@ -48,6 +50,7 @@ export interface XftpServer {
   server: XftpServerAddress;
   enabled: boolean;
   status: Status;
+  isCommunity?: boolean;
 }
 
 export type FileDescriptor = string;
@@ -72,9 +75,12 @@ export interface FileProgress<T extends File | FileDescriptor> {
 
 export interface PrimaryDownloadPlan {
   address: XftpFileAddress;
+  _fd?: any;
 }
 
 export interface FinalDownloadPlan {
+  size?: number;
   addresses: XftpFileAddress[];
   filename: string;
+  _resolvedFd?: any;
 }

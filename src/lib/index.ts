@@ -5,3 +5,6 @@ export class XftpSend extends XftpSendApp {
         super();
     }
 }
+
+export * from './app';
+export * from './community';

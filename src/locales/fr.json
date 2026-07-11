@@ -4,26 +4,29 @@
     "locating_map": "Obtention des métadonnées...",
     "unknown_file": "Fichier inconnu",
     "downloading": "Téléchargement: {filename}",
-    "decrypting": "Déchiffrement et assemblage des parties du fichier...",
+    "decrypting": "Déchiffrement et assemblage du fichier...",
     "download_error": "Erreur de téléchargement: {error}",
-    "uploading": "Téléversement: {filename}",
-    "distributing": "Distribution des parties chiffrées du fichier sur le réseau...",
+    "uploading": "Envoi: {filename}",
+    "distributing": "Envoi des morceaux chiffrés aux serveurs...",
     "upload_error": "Erreur de téléversement: {error}",
     "how_it_works": "Pourquoi est-ce sécurisé ?",
     "powered_by": "Propulsé par SimpleX Network",
     "source_code": "Code source",
-    "init_error": "Erreur d'initialisation: {error}"
+    "init_error": "Erreur d'initialisation : {error}",
+    "add_server_error": "Erreur d'ajout de serveur : {error}",
+    "preparing_share": "Préparation du fichier...",
+    "connecting_servers": "Connexion aux serveurs..."
   },
   "upload": {
-    "preparing": "Préparation du téléversement...",
-    "title": "Téléverser un fichier",
-    "subtitle": "Glissez-déposez ou cliquez pour parcourir",
+    "preparing": "Préparation...",
+    "title": "Envoyer le fichier",
+    "subtitle": "Glissez-déposez un fichier ici ou cliquez pour le sélectionner",
     "processing": "Traitement...",
-    "button": "Parcourir les fichiers"
+    "button": "Sélectionner un fichier"
   },
   "sidebar": {
-    "title": "XFTP Send",
-    "servers": "Serveurs de routage",
+    "title": "SimpleX Send",
+    "servers": "Serveurs",
     "status": {
       "checking": "Vérification",
       "offline": "Hors ligne",
@@ -38,7 +41,11 @@
       "placeholder": "xftp://identity@new.servers.net",
       "add_server": "Ajouter un serveur",
       "adding": "..."
-    }
+    },
+    "community_auto_fetch": "Récupérer les serveurs communautaires au démarrage",
+    "community_fetch": "Télécharger serveurs",
+    "community_fetching": "Téléchargement...",
+    "community_clear": "Effacer"
   },
   "confirm": {
     "hide_servers": "Masquer les serveurs",
@@ -56,62 +63,62 @@
   },
   "no_servers": {
     "title_active": "Aucun serveur actif",
-    "title_empty": "Aucun serveur trouvé",
-    "subtitle_active": "Vous n'avez aucun serveur accessible pour téléverser vos fichiers. Veuillez activer un serveur dans le menu pour continuer.",
-    "subtitle_empty": "Vous n'avez pas encore ajouté de serveur. Veuillez ajouter un serveur dans le menu pour commencer à partager des fichiers."
+    "title_empty": "La liste des serveurs est vide",
+    "subtitle_active": "Aucun serveur disponible pour envoyer des fichiers. Activez au moins un serveur dans le menu.",
+    "subtitle_empty": "Vous n'avez pas encore ajouté de serveurs. Ajoutez-les dans le menu de gauche pour commencer."
   },
   "result": {
-    "title": "Lien sécurisé prêt",
-    "subtitle": "Quiconque possède ce lien peut télécharger le fichier. En général, les fichiers sont conservés pendant 2 jours",
+    "title": "Fichier envoyé",
+    "subtitle": "Partagez ce lien avec le destinataire. En général, le lien est valide pendant 48 heures.",
     "copy": "Copier",
     "share": "Partager",
     "share_title": "Lien sécurisé",
-    "upload_another": "Téléverser un autre fichier"
+    "upload_another": "Envoyer un autre fichier"
   },
   "about": {
     "title": "Vos fichiers, parfaitement privés.",
-    "intro": "Nous ne nous contentons pas d'envoyer votre fichier. Nous le découpons en minuscules morceaux de fichier chiffrés et les dispersons sur plusieurs serveurs gérés par des personnes totalement indépendantes. Aucun serveur ne détient le fichier entier, et personne ne peut même deviner sa taille réelle ou son contenu.",
+    "intro": "Nous ne nous contentons pas d'envoyer votre fichier. Votre fichier est chiffré directement sur votre appareil, découpé en petits morceaux, et dispersé sur des serveurs indépendants appartenant à différents opérateurs. Aucun serveur ne reçoit le fichier en entier, et personne au monde ne peut deviner sa taille réelle ou son contenu.",
     "split": {
-      "title": "Morceaux de fichier dispersés",
-      "desc": "Votre fichier n'est jamais stocké en une seule pièce. Il est divisé en fragments aléatoires et verrouillé sur différents serveurs indépendants."
+      "title": "Fichier dispersé parmi différents opérateurs",
+      "desc": "Le fichier n'est pas stocké à un seul endroit. Il est découpé en morceaux qui sont envoyés sur différents serveurs indépendants. Chaque opérateur de serveur ne voit qu'une partie du fichier chiffré et ne peut même pas en deviner la taille réelle. L'opérateur ne sait pas sur quels autres serveurs se trouvent les morceaux restants."
     },
     "key": {
       "title": "La clé est uniquement dans le lien",
-      "desc": "Les serveurs ne conservent qu'un bruit blanc dénué de sens. La clé de déchiffrement est intégrée au lien lui-même, de sorte que seuls vous et votre destinataire pouvez le déverrouiller."
+      "desc": "Au lieu du contenu de ces morceaux, les serveurs ne voient qu'un bruit chiffré. La clé de déchiffrement est cachée dans le lien lui-même, de sorte que seuls vous et votre destinataire pouvez l'ouvrir."
     },
     "anon": {
       "title": "Anonymat total",
-      "desc": "Aucun compte. Lorsque quelqu'un ouvre votre lien, les morceaux de fichier sont récupérés silencieusement et recollés uniquement sur son appareil."
+      "desc": "Pas de compte — pas d'inscription. Lorsque le destinataire ouvre le lien, les morceaux du fichier sont téléchargés et réassemblés uniquement sur son appareil."
     },
     "hood": {
-      "title": "Sous le capot: Comment ça marche (Pour les geeks)",
-      "intro": "Lorsque vous téléversez un fichier, voici ce qui se passe:"
+      "title": "Un peu plus de détails techniques",
+      "intro": "Lorsque vous envoyez un fichier, voici ce qui se passe :"
     },
     "steps": {
       "availability": {
         "title": "1. Vérification de disponibilité:",
-        "desc": "Tout d'abord, le navigateur interroge tous les serveurs XFTP activés dans vos paramètres et filtre ceux inaccessibles.",
-        "note": "Remarque: Les serveurs sont gérés par différents opérateurs indépendants, ce qui élimine les points uniques de défaillance ou de compromission."
+        "desc": "Le navigateur interroge les serveurs XFTP activés et filtre ceux qui sont inaccessibles.",
+        "note": "Remarque : les serveurs sont hébergés par différentes personnes. Cela élimine un point de défaillance unique."
       },
       "sharding": {
-        "title": "2. Fragmentation et chiffrement:",
-        "desc": "Le fichier ne quitte jamais votre appareil dans son ensemble. Localement dans le navigateur, il est découpé en petits morceaux chiffrés (fragments)."
+        "title": "2. Fragmentation :",
+        "desc": "Le navigateur découpe le fichier en morceaux."
       },
       "dispatch": {
-        "title": "3. Envoi parallèle:",
-        "desc": "Les fragments sont distribués aléatoirement et téléversés simultanément sur les serveurs actifs. Aucun opérateur de serveur ne reçoit la totalité du fichier — uniquement du \"bruit blanc\" chiffré."
+        "title": "3. Chiffrement et envoi en parallèle :",
+        "desc": "Chaque morceau est chiffré et téléversé sur un serveur aléatoire à partir du pool de serveurs disponibles (étape 1). Le téléversement se fait en parallèle."
       },
       "map": {
-        "title": "4. Carte du fichier:",
-        "desc": "Après avoir téléversé les fragments, le navigateur crée un méta-fichier final. Il contient les adresses des serveurs et les clés de déchiffrement de chaque morceau individuel. Ce méta-fichier est également chiffré et téléversé sur le réseau."
+        "title": "4. Méta-fichier :",
+        "desc": "Une fois tous les morceaux envoyés, le navigateur rassemble un méta-fichier contenant des informations sur l'emplacement et l'ordre de tous les morceaux, ainsi que les clés pour déchiffrer chaque morceau. Ce fichier est également chiffré et envoyé à un serveur aléatoire depuis le pool de serveurs disponibles (étape 1)."
       },
       "hash": {
-        "title": "5. Hachage d'URL:",
-        "desc": "La clé de déchiffrement du méta-fichier lui-même est placée dans le hachage de votre lien (tout ce qui se trouve après le `#`).",
-        "note": "Cette partie du lien n'est jamais envoyée à aucun serveur lorsque vous cliquez dessus."
+        "title": "5. Hachage d'URL :",
+        "desc": "La clé du méta-fichier est placée dans le hachage de votre lien (tout ce qui suit le signe `#`).",
+        "note": "Remarque : cette partie du lien n'est pas envoyée au serveur lors de l'ouverture de la page dans un navigateur."
       }
     },
-    "reverse": "Le téléchargement fonctionne exactement à l'inverse: Lors du suivi du lien, le navigateur lit le hachage localement, télécharge et déchiffre le méta-fichier. Il extrait ensuite les fragments des serveurs requis en parallèle, les déchiffre à la volée et réassemble le fichier directement dans la mémoire de votre appareil.",
+    "reverse": "Le téléchargement fonctionne en sens inverse : le navigateur lit le hachage, télécharge le méta-fichier, le déchiffre, télécharge les morceaux depuis les serveurs, les déchiffre et les réassemble directement dans la mémoire vive de l'appareil.",
     "got_it": "J'ai compris"
   },
   "network": {

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { _ } from "../lib/i18n";
+  import { trackEvent } from "../lib/tracking";
   import { fly, slide } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
 
@@ -17,6 +18,7 @@
 
   async function handleConfirm() {
     if (isLoading) return;
+    trackEvent("click_download");
     isLoading = true;
     try {
       await onConfirm();

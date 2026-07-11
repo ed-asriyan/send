@@ -1,14 +1,17 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { fade, slide, fly } from "svelte/transition";
+  import { fly } from "svelte/transition";
   import { cubicOut, cubicIn } from "svelte/easing";
-  import { _, locale } from "./lib/i18n";
-  import { XftpSend } from "./lib/index";
+  import { _ } from "./lib/i18n";
+  import { trackEvent } from "./lib/tracking";
+  import {
+    XftpSendApp as XftpSend,
+    CommunityServersManager,
+  } from "./lib/index";
   import { XftpServerAddress } from "./lib/models";
   import type {
     FileTransferStatus,
     FinalDownloadPlan,
-    PrimaryDownloadPlan,
     XftpServer,
   } from "./lib/models";
   import AmbientBackground from "./components/AmbientBackground.svelte";
@@ -21,14 +24,17 @@
   import ConfirmView from "./views/ConfirmView.svelte";
   import CompleteView from "./views/CompleteView.svelte";
   import AboutOverlay from "./components/AboutOverlay.svelte";
-  import LanguageSwitcher from "./components/LanguageSwitcher.svelte";
   import { get } from "svelte/store";
 
   type ViewType = "upload" | "progress" | "result" | "confirm" | "complete";
 
+  const isSharedRoute =
+    typeof window !== "undefined" && window.location.search.includes("shared=");
+
   // State (Svelte 5 Runes)
   let currentView = $state<ViewType>(
-    typeof window !== "undefined" && window.location.hash.length > 1
+    isSharedRoute ||
+      (typeof window !== "undefined" && window.location.hash.length > 1)
       ? "progress"
       : "upload",
   );
@@ -37,6 +43,9 @@
 
   let isDownloadMode = $state(false);
   let app = $state<XftpSend>(new XftpSend());
+  let community = $state<CommunityServersManager>(
+    new CommunityServersManager(app),
+  );
   let servers = $state<XftpServer[]>([]);
 
   let hasAvailableServers = $derived(
@@ -45,9 +54,9 @@
     ),
   );
 
-  let appAction = $state<"idle" | "initializing" | "uploading" | "downloading">(
-    "idle",
-  );
+  let appAction = $state<
+    "idle" | "initializing" | "uploading" | "downloading" | "preparing_share"
+  >(isSharedRoute ? "preparing_share" : "idle");
   let currentFile = $state<string | null>(null);
 
   let progressTitle = $derived.by(() => {
@@ -60,6 +69,10 @@
       return $_("app.uploading", {
         values: { filename: currentFile || $_("app.unknown_file") },
       });
+    if (appAction === "preparing_share")
+      return $_("app.preparing_share", {
+        values: { filename: currentFile || $_("app.unknown_file") },
+      });
     return "";
   });
 
@@ -67,6 +80,7 @@
     if (appAction === "initializing") return $_("app.locating_map");
     if (appAction === "downloading") return $_("app.decrypting");
     if (appAction === "uploading") return $_("app.distributing");
+    if (appAction === "preparing_share") return $_("app.connecting_servers");
     return "";
   });
 
@@ -81,18 +95,134 @@
   let confirmServers = $state<string[]>([]);
   let confirmAction = $state<() => void | Promise<void>>(() => {});
 
+  let useCommunityServers = $state<boolean>(community.isEnabled);
+
   async function loadServers() {
     servers = [...app.listServers()];
+    useCommunityServers = community.isEnabled;
+  }
+
+  async function handleToggleCommunityServers(enabled: boolean) {
+    useCommunityServers = enabled;
+    await community.setEnabled(enabled);
+  }
+
+  async function handleFetchCommunity() {
+    await community.refresh();
+    loadServers();
+  }
+
+  function handleClearCommunity() {
+    community.clear();
+    loadServers();
+  }
+
+  async function checkSharedFile(initPromise: Promise<any>) {
+    const url = new URL(window.location.href);
+    if (url.searchParams.has("shared")) {
+      appAction = "preparing_share";
+      currentView = "progress";
+      url.searchParams.delete("shared");
+      window.history.replaceState({}, "", url);
+
+      try {
+        const file = await getSharedFile();
+        if (file) {
+          currentFile = file.name;
+
+          // Ожидаем завершения параллельного пинга всех серверов
+          await initPromise;
+
+          const active = app
+            .listServers()
+            .filter((s) => s.enabled && s.status === true);
+
+          if (active.length === 0) {
+            alert(
+              get(_)("app.upload_error", {
+                values: { error: "Could not connect to any XFTP server." },
+              }),
+            );
+            currentView = "upload";
+            return;
+          }
+
+          await handleUpload(file);
+        } else {
+          appAction = "idle";
+          currentView = "upload";
+        }
+      } catch (err) {
+        console.error("Failed to handle shared file:", err);
+        appAction = "idle";
+        currentView = "upload";
+      }
+    }
+  }
+
+  function getSharedFile(): Promise<File | null> {
+    return new Promise((resolve, reject) => {
+      const request = indexedDB.open("SimpleXSharedFiles", 1);
+
+      request.onupgradeneeded = (e) => {
+        const db = (e.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains("files")) {
+          db.createObjectStore("files", { keyPath: "id" });
+        }
+      };
+
+      request.onsuccess = (e) => {
+        const db = (e.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains("files")) {
+          return resolve(null);
+        }
+        const tx = db.transaction("files", "readwrite");
+        const store = tx.objectStore("files");
+        const getReq = store.get("shared-file");
+
+        getReq.onsuccess = () => {
+          if (getReq.result) {
+            store.delete("shared-file");
+            resolve(getReq.result.file);
+          } else {
+            resolve(null);
+          }
+        };
+
+        getReq.onerror = () => reject(getReq.error);
+        tx.oncomplete = () => db.close();
+      };
+
+      request.onerror = () => reject(request.error);
+    });
   }
 
   async function initServers() {
+    if (community.isEnabled) {
+      await community.refresh();
+    }
     loadServers();
+    const checks = app.listServers().map((s) =>
+      app
+        .refreshStatus(s.server)
+        .catch((e) => console.warn("Refresh failed for", s.server.address, e))
+        .finally(() => loadServers()),
+    );
+    return Promise.all(checks);
   }
 
   onMount(() => {
     window.addEventListener("hashchange", handleHashRoute);
-    handleHashRoute();
-    initServers();
+
+    // Запускаем опрос всех серверов и сохраняем Promise
+    const initPromise = initServers();
+
+    if (isSharedRoute) {
+      // Передаем этот Promise в checkSharedFile, чтобы загрузка ждала именно его
+      checkSharedFile(initPromise);
+    } else {
+      handleHashRoute();
+    }
 
     return () => {
       window.removeEventListener("hashchange", handleHashRoute);
@@ -103,7 +233,9 @@
     const hash = window.location.hash.substring(1);
     if (!hash) {
       isDownloadMode = false;
-      currentView = "upload";
+      if (appAction !== "preparing_share") {
+        currentView = "upload";
+      }
       return;
     }
 
@@ -117,10 +249,16 @@
       const mapPlan = await app.getPrimaryDownloadPlan(hash);
       const finalPlan = await app.getFinalDownloadPlan(mapPlan);
 
+      const sizeFormatted = finalPlan.size
+        ? finalPlan.size > 1024 * 1024
+          ? (finalPlan.size / (1024 * 1024)).toFixed(1) + " MB"
+          : (finalPlan.size / 1024).toFixed(1) + " KB"
+        : "";
       showConfirmDialog(
         finalPlan.filename || null,
-        "",
-        finalPlan.addresses.map((a) => a.server.getDomain()),
+        sizeFormatted ? `~ ${sizeFormatted} total` : "",
+
+        finalPlan.addresses.map((a) => a.server.url.hostname),
         async () => {
           await startDownload(finalPlan);
         },
@@ -152,7 +290,10 @@
     try {
       const { promise, events } = await app.downloadFile(finalPlan);
       events.on("progress", (statusMap) => {
-        fileTransferStatus = statusMap;
+        fileTransferStatus = statusMap.map((s) => ({
+          ...s,
+          progress: { ...s.progress },
+        }));
       });
 
       downloadBlob = await promise;
@@ -173,7 +314,10 @@
       const { promise, events } = await app.sendFile(file);
 
       events.on("progress", (statusMap) => {
-        fileTransferStatus = statusMap;
+        fileTransferStatus = statusMap.map((s) => ({
+          ...s,
+          progress: { ...s.progress },
+        }));
       });
 
       uploadDescriptor = await promise;
@@ -206,9 +350,13 @@
   }
 
   async function handleAddServer(address: string) {
-    await app.addServer(XftpServerAddress.create(address));
-    await app.refreshStatus(XftpServerAddress.create(address));
-    loadServers();
+    try {
+      await app.addServer(XftpServerAddress.create(address));
+      await app.refreshStatus(XftpServerAddress.create(address));
+      loadServers();
+    } catch (err: any) {
+      alert(get(_)("app.add_server_error", { values: { error: err.message } }));
+    }
   }
 </script>
 
@@ -226,6 +374,10 @@
     isOpen={isSidebarOpen}
     onClose={() => (isSidebarOpen = false)}
     {servers}
+    {useCommunityServers}
+    onToggleCommunityServers={handleToggleCommunityServers}
+    onFetchCommunity={handleFetchCommunity}
+    onClearCommunity={handleClearCommunity}
     onToggleServer={handleToggleServer}
     onRemoveServer={handleRemoveServer}
     onRefreshServer={handleRefreshServer}
@@ -291,7 +443,10 @@
       <div class="mt-6 md:mt-8 flex justify-center shrink-0">
         <button
           class="flex items-center gap-2 px-6 py-2 rounded-full bg-white/20 hover:bg-white/40 border border-white/50 backdrop-blur-md shadow-sm transition-all text-slate-700 font-medium text-sm hover:scale-105 active:scale-95"
-          onclick={() => (showAbout = true)}
+          onclick={() => {
+            trackEvent("click_how_it_works");
+            showAbout = true;
+          }}
         >
           <span>🔒</span>
           {$_("app.how_it_works")}

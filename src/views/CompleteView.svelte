@@ -1,5 +1,6 @@
 <script lang="ts">
   import { _ } from "../lib/i18n";
+  import { trackEvent } from "../lib/tracking";
   import { onMount } from "svelte";
 
   interface Props {
@@ -45,14 +46,20 @@
   <div class="text-sm text-slate-500 mb-10">
     {$_("complete.manual_prompt")}
     <button
-      onclick={triggerDownload}
+      onclick={() => {
+        trackEvent("click_manual_download");
+        triggerDownload();
+      }}
       class="text-indigo-600 hover:text-indigo-700 font-medium underline underline-offset-4 decoration-indigo-200 hover:decoration-indigo-500 transition-colors"
       >{$_("complete.click_here")}</button
     >.
   </div>
 
   <button
-    onclick={onBackToUpload}
+    onclick={() => {
+      trackEvent("click_send_own_file");
+      onBackToUpload();
+    }}
     class="px-8 py-3 rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/10 font-medium transition-colors"
   >
     {$_("complete.send_own")}

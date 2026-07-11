@@ -1,6 +1,6 @@
 <script lang="ts">
   import { _ } from "../lib/i18n";
-  import { onMount } from "svelte";
+  import { trackEvent } from "../lib/tracking";
   import QRCode from "qrcode";
 
   interface Props {
@@ -12,24 +12,29 @@
   let shareUrl = $derived(
     `${window.location.origin}${window.location.pathname}#${descriptor}`,
   );
-  let qrCodeCanvas: HTMLCanvasElement;
+  let qrCodeDataUrl = $state("");
   let urlInput: HTMLInputElement;
   let isCopied = $state(false);
+  let isQrExpanded = $state(false);
 
   $effect(() => {
-    if (qrCodeCanvas && shareUrl) {
-      QRCode.toCanvas(
-        qrCodeCanvas,
+    if (shareUrl) {
+      QRCode.toDataURL(
         shareUrl,
         {
-          width: 140,
+          width: 512,
+          margin: 1,
           color: {
             dark: "#0f172a",
             light: "#ffffff",
           },
         },
-        (error) => {
-          if (error) console.error(error);
+        (error, url) => {
+          if (error) {
+            console.error(error);
+          } else {
+            qrCodeDataUrl = url;
+          }
         },
       );
     }
@@ -139,12 +144,34 @@
     {/if}
   </div>
 
-  <div class="p-4 bg-white rounded-3xl shadow-sm inline-block mb-6">
-    <canvas bind:this={qrCodeCanvas}></canvas>
-  </div>
+  <button
+    onclick={() => {
+      trackEvent("click_qr_code", {
+        action: isQrExpanded ? "collapse" : "expand",
+      });
+      isQrExpanded = !isQrExpanded;
+    }}
+    class="bg-white rounded-3xl shadow-sm inline-block mb-6 cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] focus:outline-none {isQrExpanded
+      ? 'w-full p-6 sm:p-8'
+      : 'p-4'}"
+    aria-label="Toggle QR Code Size"
+  >
+    {#if qrCodeDataUrl}
+      <img
+        src={qrCodeDataUrl}
+        alt="QR Code"
+        class="mx-auto transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] {isQrExpanded
+          ? 'w-full h-auto'
+          : 'w-[140px] h-[140px]'}"
+      />
+    {/if}
+  </button>
 
   <button
-    onclick={onNewUpload}
+    onclick={() => {
+      trackEvent("click_upload_another");
+      onNewUpload();
+    }}
     class="text-indigo-600 hover:text-indigo-700 font-medium text-sm transition-colors px-4 py-2 hover:bg-indigo-50 rounded-full"
   >
     {$_("result.upload_another")}

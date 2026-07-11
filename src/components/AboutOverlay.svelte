@@ -1,6 +1,7 @@
 <script lang="ts">
   import { _ } from "../lib/i18n";
-  import { fade, fly } from "svelte/transition";
+  import { trackEvent } from "../lib/tracking";
+  import { fade, fly, slide } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
 
   interface Props {
@@ -9,6 +10,8 @@
   }
 
   let { show, onClose }: Props = $props();
+
+  let showHood = $state(false);
 </script>
 
 {#if show}
@@ -102,53 +105,76 @@
       </div>
 
       <div class="mt-8 pt-8 border-t border-slate-200/50">
-        <h4
-          class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6"
+        <button
+          class="text-indigo-500 hover:text-indigo-600 text-sm font-medium transition-colors underline decoration-indigo-500/30 underline-offset-4 mb-2 flex items-center gap-1"
+          onclick={() => {
+            trackEvent("click_technical_details");
+            showHood = !showHood;
+          }}
         >
-          {$_("about.hood.title")}
-        </h4>
+          <span class="text-xs font-bold uppercase tracking-widest"
+            >{$_("about.hood.title")}</span
+          >
+          <svg
+            class="w-4 h-4 transition-transform {showHood ? 'rotate-180' : ''}"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            ><path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M19 9l-7 7-7-7"
+            ></path></svg
+          >
+        </button>
 
-        <p class="font-medium text-slate-800 text-sm mb-4">
-          {$_("about.hood.intro")}
-        </p>
+        {#if showHood}
+          <div transition:slide class="overflow-hidden">
+            <div class="mt-3 pt-3 pb-3 text-sm text-slate-600 leading-relaxed">
+              {$_("about.hood.intro")}
+            </div>
 
-        <div class="space-y-4 text-sm text-slate-600">
-          <div>
-            <strong class="text-slate-800"
-              >{$_("about.steps.availability.title")}</strong
-            >
-            {$_("about.steps.availability.desc")}
-            <em>{$_("about.steps.availability.note")}</em>
-          </div>
-          <div>
-            <strong class="text-slate-800"
-              >{$_("about.steps.sharding.title")}</strong
-            >
-            {$_("about.steps.sharding.desc")}
-          </div>
-          <div>
-            <strong class="text-slate-800"
-              >{$_("about.steps.dispatch.title")}</strong
-            >
-            {$_("about.steps.dispatch.desc")}
-          </div>
-          <div>
-            <strong class="text-slate-800">{$_("about.steps.map.title")}</strong
-            >
-            {$_("about.steps.map.desc")}
-          </div>
-          <div>
-            <strong class="text-slate-800"
-              >{$_("about.steps.hash.title")}</strong
-            >
-            {$_("about.steps.hash.desc")}
-            <em>{$_("about.steps.hash.note")}</em>
-          </div>
-        </div>
+            <div class="space-y-4 text-sm text-slate-600">
+              <div>
+                <strong class="text-slate-800"
+                  >{$_("about.steps.availability.title")}</strong
+                >
+                {$_("about.steps.availability.desc")}
+                <em>{$_("about.steps.availability.note")}</em>
+              </div>
+              <div>
+                <strong class="text-slate-800"
+                  >{$_("about.steps.sharding.title")}</strong
+                >
+                {$_("about.steps.sharding.desc")}
+              </div>
+              <div>
+                <strong class="text-slate-800"
+                  >{$_("about.steps.dispatch.title")}</strong
+                >
+                {$_("about.steps.dispatch.desc")}
+              </div>
+              <div>
+                <strong class="text-slate-800"
+                  >{$_("about.steps.map.title")}</strong
+                >
+                {$_("about.steps.map.desc")}
+              </div>
+              <div>
+                <strong class="text-slate-800"
+                  >{$_("about.steps.hash.title")}</strong
+                >
+                {$_("about.steps.hash.desc")}
+                <em>{$_("about.steps.hash.note")}</em>
+              </div>
+            </div>
 
-        <div class="mt-3 pt-3 text-sm text-slate-600 leading-relaxed">
-          {$_("about.reverse")}
-        </div>
+            <div class="mt-3 pt-3 text-sm text-slate-600 leading-relaxed">
+              {$_("about.reverse")}
+            </div>
+          </div>
+        {/if}
       </div>
 
       <div class="mt-10 flex justify-center">
