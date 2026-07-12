@@ -224,7 +224,7 @@
       handleHashRoute();
     } else {
       initPromise.finally(() => {
-        if (!window.location.hash && appAction === "initializing") {
+        if (!window.location.hash) {
           appAction = "idle";
           currentView = "upload";
         }
