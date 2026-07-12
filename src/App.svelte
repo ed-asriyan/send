@@ -215,7 +215,8 @@
 
   onMount(() => {
     window.addEventListener("hashchange", handleHashRoute);
-    const initialRoute = hasNonEmptyHash() ? "hash" : "upload";
+    const initialHash = window.location.hash;
+    const openedWithHash = initialHash.length > 1;
 
     // Запускаем опрос всех серверов и сохраняем Promise
     const initPromise = initServers();
@@ -223,11 +224,11 @@
     if (isSharedRoute) {
       // Передаем этот Promise в checkSharedFile, чтобы загрузка ждала именно его
       checkSharedFile(initPromise);
-    } else if (initialRoute === "hash") {
+    } else if (openedWithHash) {
       handleHashRoute();
     } else {
       initPromise.finally(() => {
-        if (!hasNonEmptyHash()) {
+        if (window.location.hash === initialHash) {
           appAction = "idle";
           currentView = "upload";
         }
