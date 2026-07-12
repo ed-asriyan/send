@@ -30,14 +30,11 @@
 
   const isSharedRoute =
     typeof window !== "undefined" && window.location.search.includes("shared=");
+  const hasHashRoute =
+    typeof window !== "undefined" && window.location.hash.length > 1;
 
   // State (Svelte 5 Runes)
-  let currentView = $state<ViewType>(
-    isSharedRoute ||
-      (typeof window !== "undefined" && window.location.hash.length > 1)
-      ? "progress"
-      : "upload",
-  );
+  let currentView = $state<ViewType>("progress");
   let isSidebarOpen = $state(false);
   let showAbout = $state(false);
 
@@ -56,7 +53,7 @@
 
   let appAction = $state<
     "idle" | "initializing" | "uploading" | "downloading" | "preparing_share"
-  >(isSharedRoute ? "preparing_share" : "idle");
+  >(isSharedRoute ? "preparing_share" : "initializing");
   let currentFile = $state<string | null>(null);
 
   let progressTitle = $derived.by(() => {
@@ -77,7 +74,10 @@
   });
 
   let progressSubtitle = $derived.by(() => {
-    if (appAction === "initializing") return $_("app.locating_map");
+    if (appAction === "initializing")
+      return isDownloadMode
+        ? $_("app.locating_map")
+        : $_("app.connecting_servers");
     if (appAction === "downloading") return $_("app.decrypting");
     if (appAction === "uploading") return $_("app.distributing");
     if (appAction === "preparing_share") return $_("app.connecting_servers");
@@ -220,8 +220,15 @@
     if (isSharedRoute) {
       // Передаем этот Promise в checkSharedFile, чтобы загрузка ждала именно его
       checkSharedFile(initPromise);
-    } else {
+    } else if (hasHashRoute) {
       handleHashRoute();
+    } else {
+      initPromise.finally(() => {
+        if (!window.location.hash && appAction === "initializing") {
+          appAction = "idle";
+          currentView = "upload";
+        }
+      });
     }
 
     return () => {
