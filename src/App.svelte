@@ -30,7 +30,7 @@
 
   const isSharedRoute =
     typeof window !== "undefined" && window.location.search.includes("shared=");
-  const hasHashRoute =
+  const hasNonEmptyHash =
     typeof window !== "undefined" && window.location.hash.length > 1;
 
   // State (Svelte 5 Runes)
@@ -220,11 +220,11 @@
     if (isSharedRoute) {
       // Передаем этот Promise в checkSharedFile, чтобы загрузка ждала именно его
       checkSharedFile(initPromise);
-    } else if (hasHashRoute) {
+    } else if (hasNonEmptyHash) {
       handleHashRoute();
     } else {
       initPromise.finally(() => {
-        if (!window.location.hash) {
+        if (window.location.hash.length <= 1) {
           appAction = "idle";
           currentView = "upload";
         }
