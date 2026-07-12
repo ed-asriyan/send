@@ -30,8 +30,10 @@
 
   const isSharedRoute =
     typeof window !== "undefined" && window.location.search.includes("shared=");
-  const hasNonEmptyHash =
-    typeof window !== "undefined" && window.location.hash.length > 1;
+
+  function hasNonEmptyHash() {
+    return typeof window !== "undefined" && window.location.hash.length > 1;
+  }
 
   // State (Svelte 5 Runes)
   let currentView = $state<ViewType>("progress");
@@ -220,11 +222,11 @@
     if (isSharedRoute) {
       // Передаем этот Promise в checkSharedFile, чтобы загрузка ждала именно его
       checkSharedFile(initPromise);
-    } else if (hasNonEmptyHash) {
+    } else if (hasNonEmptyHash()) {
       handleHashRoute();
     } else {
       initPromise.finally(() => {
-        if (window.location.hash.length <= 1) {
+        if (!hasNonEmptyHash()) {
           appAction = "idle";
           currentView = "upload";
         }
