@@ -31,7 +31,8 @@
       const step = height / (progress.length + 1);
       const stats = item.progress;
       return {
-        name: item.server.url.host,
+        name: item.server.url.hostname,
+        link: `https://${item.server.url.host}`,
         y: step * (i + 1),
         // Calculate percentage (0-100)
         percent: stats?.max ? Math.round((stats.current / stats.max) * 100) : 0,
@@ -117,7 +118,7 @@
     <!-- Server nodes (Right) -->
     {#each serverNodes as node}
       <a
-        href={"https://" + node.name}
+        href={node.link}
         target="_blank"
         rel="noopener noreferrer"
         class="server-node group cursor-pointer"
