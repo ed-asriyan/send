@@ -58,7 +58,7 @@
     : ''}"
 >
   <div
-    class="w-full border-2 border-dashed rounded-[2rem] p-10 md:p-16 transition-all cursor-pointer group flex flex-col items-center {isDragging
+    class="w-full border-2 border-dashed rounded-[2rem] p-10 md:p-16 transition-all cursor-pointer group flex flex-col items-center min-w-0 {isDragging
       ? 'border-indigo-400 bg-indigo-50/50'
       : 'border-indigo-200/50 hover:bg-indigo-50/30 hover:border-indigo-400/50'}"
     onclick={() => {
@@ -94,7 +94,7 @@
     </div>
     <ScrollingText
       text={isUploading ? $_("upload.preparing") : $_("upload.title")}
-      class="text-xl md:text-2xl font-medium text-slate-800 mb-2 justify-center"
+      class="text-xl md:text-2xl font-medium text-slate-800 mb-2 justify-center w-full"
     />
     <p class="text-slate-500 text-sm mb-8">{$_("upload.subtitle")}</p>
     <input

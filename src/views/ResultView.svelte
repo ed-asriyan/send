@@ -64,9 +64,11 @@
   }
 </script>
 
-<div class="flex-col items-center text-center flex">
+<div
+  class="flex-col items-center text-center flex min-w-0 overflow-hidden w-full"
+>
   <div
-    class="w-16 h-16 rounded-full bg-emerald-100/50 flex items-center justify-center mb-6 text-emerald-600"
+    class="w-16 h-16 rounded-full bg-emerald-100/50 flex items-center justify-center mb-6 text-emerald-600 shrink-0"
   >
     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"
       ><path
@@ -79,7 +81,7 @@
   </div>
   <ScrollingText
     text={$_("result.title")}
-    class="text-2xl font-medium text-slate-900 mb-2 justify-center"
+    class="text-2xl font-medium text-slate-900 mb-2 justify-center w-full"
   />
   <p class="text-slate-500 text-sm mb-8 max-w-md">{$_("result.subtitle")}</p>
 

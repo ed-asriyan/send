@@ -34,11 +34,11 @@
     <div
       in:fly={{ y: 15, duration: 400, delay: 150, easing: cubicOut }}
       out:fly={{ y: -15, duration: 150 }}
-      class="flex-col items-center text-center flex w-full"
+      class="flex-col items-center text-center flex w-full min-w-0 overflow-hidden"
       style="grid-area: 1 / 1;"
     >
       <div
-        class="w-16 h-16 rounded-full bg-blue-100/50 flex items-center justify-center mb-6 text-blue-600"
+        class="w-16 h-16 rounded-full bg-blue-100/50 flex items-center justify-center mb-6 text-blue-600 shrink-0"
       >
         <svg
           class="w-8 h-8"
@@ -55,7 +55,7 @@
       </div>
       <ScrollingText
         text={title}
-        class="text-2xl font-medium text-slate-900 mb-3 justify-center"
+        class="text-2xl font-medium text-slate-900 mb-3 justify-center w-full"
       />
       {#if description}
         <p class="text-slate-500 text-sm mb-6 max-w-md">{description}</p>
@@ -84,9 +84,9 @@
                 href={"https://" + server}
                 target="_blank"
                 rel="noopener noreferrer"
-                class="truncate hover:underline cursor-pointer"
+                class="hover:underline cursor-pointer flex-1 min-w-0"
               >
-                {server}
+                <ScrollingText text={server} class="w-full" />
               </a>
             </div>
           {/each}

@@ -35,6 +35,7 @@ The frontend relies on a specific "Glassmorphic" minimal aesthetic. **Do not eng
 - **Color Discipline:** Stick exclusively to the established Tailwind palette (`slate` for text, `indigo`/`purple` for primary accents, `emerald`/`red` for status). Do not invent new color schemes.
 - **No Native Browser Elements:** Never use default `<select>`, `<input type="file">` (hide it and trigger via custom buttons), or native scrollbars.
 - **SVGs over Images:** Use inline SVGs with `currentColor` or soft Tailwind stroke colors for iconography.
+- **Text Overflow & Truncation:** Never use Tailwind's `truncate` or allow single-line text (like server hostnames, titles, or ports) to abruptly cut off. Always use the custom `ScrollingText.svelte` component, which automatically handles smooth marquee scrolling for overflowing text.
 
 ## 4. Internationalization (i18n) Protocol
 We use `svelte-i18n`. **Never hardcode user-facing strings in HTML or TypeScript.**
