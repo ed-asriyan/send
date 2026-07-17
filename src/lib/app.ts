@@ -166,10 +166,11 @@ export class XftpSendApp {
         const xftpServers = selectedServers.map(s => parseXFTPServer(s.address));
 
         const result = await uploadFile(agent, xftpServers, metadata, {
+          maxSweeps: 2,
           readChunk: (off, sz) => backend.readChunk(off, sz),
           onProgress: (uploaded, total, perServer) => {
             if (perServer) {
-              progressMap.forEach(r => {
+              for (const r of progressMap) {
                 try {
                   const srvKey = formatXFTPServer(parseXFTPServer(r.server.address));
                   const stats = perServer.get(srvKey);
@@ -180,7 +181,7 @@ export class XftpSendApp {
                     r.progress.current = ENCRYPT_WEIGHT * 100;
                   }
                 } catch(e) {}
-              });
+              }
               emitter.emit("progress", progressMap);
             } else {
               updateProgress(ENCRYPT_WEIGHT + (uploaded / total) * (1 - ENCRYPT_WEIGHT));

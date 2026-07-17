@@ -24,6 +24,35 @@ import type {XFTPServer} from "./protocol/address.js"
 import {formatXFTPServer, parseXFTPServer} from "./protocol/address.js"
 import type {FileHeader} from "./crypto/file.js"
 
+class ServerPool {
+  private available: Set<XFTPServer>;
+  private waiters: ((s: XFTPServer) => void)[] = [];
+
+  constructor(servers: XFTPServer[]) {
+    this.available = new Set(servers);
+  }
+
+  acquire(): Promise<XFTPServer> {
+    if (this.available.size > 0) {
+      const items = Array.from(this.available);
+      const idx = Math.floor(Math.random() * items.length);
+      const srv = items[idx];
+      this.available.delete(srv);
+      return Promise.resolve(srv);
+    }
+    return new Promise(resolve => this.waiters.push(resolve));
+  }
+
+  release(server: XFTPServer) {
+    if (this.waiters.length > 0) {
+      const resolve = this.waiters.shift()!;
+      resolve(server);
+    } else {
+      this.available.add(server);
+    }
+  }
+}
+
 // -- Types
 
 interface SentChunk {
@@ -105,6 +134,7 @@ export interface UploadOptions {
   onProgress?: (uploaded: number, total: number, perServer?: Map<string, ServerProgress>) => void
   redirectThreshold?: number
   readChunk?: (offset: number, size: number) => Promise<Uint8Array>
+  maxSweeps?: number
 }
 
 export async function uploadFile(
@@ -114,7 +144,9 @@ export async function uploadFile(
   options?: UploadOptions
 ): Promise<UploadResult> {
   if (servers.length === 0) throw new Error("uploadFile: servers list is empty")
-  const {onProgress, redirectThreshold, readChunk: readChunkOpt} = options ?? {}
+  const {onProgress, redirectThreshold, readChunk: readChunkOpt, maxSweeps} = options ?? {}
+  const maxAttempts = servers.length * (maxSweeps ?? 2)
+
   const readChunk: (offset: number, size: number) => Promise<Uint8Array> = readChunkOpt
     ? readChunkOpt
     : ('encData' in encrypted
@@ -123,59 +155,77 @@ export async function uploadFile(
   const total = encrypted.chunkSizes.reduce((a, b) => a + b, 0)
   const specs = prepareChunkSpecs(encrypted.chunkSizes)
 
-  // Pre-assign servers and group by server for parallel upload
-  const chunkJobs = specs.map((spec, i) => ({
-    index: i,
-    spec,
-    server: servers[Math.floor(Math.random() * servers.length)]
-  }))
-  const byServer = new Map<string, typeof chunkJobs>()
+  const pool = new ServerPool(servers)
   const perServerMap = new Map<string, ServerProgress>()
   for (const s of servers) {
     perServerMap.set(formatXFTPServer(s), { uploaded: 0, total: 0 })
   }
 
-  for (const job of chunkJobs) {
-    const key = formatXFTPServer(job.server)
-    if (!byServer.has(key)) byServer.set(key, [])
-    byServer.get(key)!.push(job)
-    const stats = perServerMap.get(key)
-    if (stats) stats.total += job.spec.chunkSize
+  // Pre-estimate totals for UI (assume roughly even distribution)
+  for (let i = 0; i < specs.length; i++) {
+    const srv = servers[i % servers.length]
+    perServerMap.get(formatXFTPServer(srv))!.total += specs[i].chunkSize
   }
 
-  // Upload groups in parallel, sequential within each group
+  const jobs = specs.map((spec, i) => ({ index: i, spec }))
   const sentChunks: SentChunk[] = new Array(specs.length)
   let uploaded = 0
   onProgress?.(0, total, perServerMap)
-  await Promise.all([...byServer.values()].map(async (jobs) => {
-    for (const {index, spec, server} of jobs) {
-      const chunkNo = index + 1
-      const sndKp = generateEd25519KeyPair()
-      const rcvKp = generateEd25519KeyPair()
-      const chunkData = await readChunk(spec.chunkOffset, spec.chunkSize)
-      const chunkDigest = getChunkDigest(chunkData)
-      const fileInfo: FileInfo = {
-        sndKey: encodePubKeyEd25519(sndKp.publicKey),
-        size: spec.chunkSize,
-        digest: chunkDigest
+  
+  const workers = servers.map(async () => {
+    while (true) {
+      const job = jobs.shift()
+      if (!job) break // no more jobs
+
+      let attempts = 0
+      let success = false
+      while (!success) {
+        attempts++
+        const currentServer = await pool.acquire()
+        const key = formatXFTPServer(currentServer)
+        
+        try {
+          const {index, spec} = job
+          const chunkNo = index + 1
+          const sndKp = generateEd25519KeyPair()
+          const rcvKp = generateEd25519KeyPair()
+          const chunkData = await readChunk(spec.chunkOffset, spec.chunkSize)
+          const chunkDigest = getChunkDigest(chunkData)
+          const fileInfo: FileInfo = {
+            sndKey: encodePubKeyEd25519(sndKp.publicKey),
+            size: spec.chunkSize,
+            digest: chunkDigest
+          }
+          const rcvKeysForChunk = [encodePubKeyEd25519(rcvKp.publicKey)]
+          const {senderId, recipientIds} = await createXFTPChunk(
+            agent, currentServer, sndKp.privateKey, fileInfo, rcvKeysForChunk
+          )
+          await uploadXFTPChunk(agent, currentServer, sndKp.privateKey, senderId, chunkData)
+          
+          sentChunks[index] = {
+            chunkNo, senderId, senderKey: sndKp.privateKey,
+            recipientId: recipientIds[0], recipientKey: rcvKp.privateKey,
+            chunkSize: spec.chunkSize, digest: chunkDigest, server: currentServer
+          }
+          uploaded += spec.chunkSize
+          const stats = perServerMap.get(key)
+          if (stats) stats.uploaded += spec.chunkSize
+          onProgress?.(uploaded, total, perServerMap)
+          
+          success = true
+        } catch (err) {
+          if (attempts >= maxAttempts) {
+            throw err
+          }
+        } finally {
+          pool.release(currentServer)
+        }
       }
-      const rcvKeysForChunk = [encodePubKeyEd25519(rcvKp.publicKey)]
-      const {senderId, recipientIds} = await createXFTPChunk(
-        agent, server, sndKp.privateKey, fileInfo, rcvKeysForChunk
-      )
-      await uploadXFTPChunk(agent, server, sndKp.privateKey, senderId, chunkData)
-      sentChunks[index] = {
-        chunkNo, senderId, senderKey: sndKp.privateKey,
-        recipientId: recipientIds[0], recipientKey: rcvKp.privateKey,
-        chunkSize: spec.chunkSize, digest: chunkDigest, server
-      }
-      uploaded += spec.chunkSize
-      const key = formatXFTPServer(server)
-      const stats = perServerMap.get(key)
-      if (stats) stats.uploaded += spec.chunkSize
-      onProgress?.(uploaded, total, perServerMap)
     }
-  }))
+  })
+
+  await Promise.all(workers)
+
   const rcvDescription = buildDescription("recipient", encrypted, sentChunks)
   const sndDescription = buildDescription("sender", encrypted, sentChunks)
   let uri = encodeDescriptionURI(rcvDescription)
