@@ -3,7 +3,6 @@
   import { trackEvent } from "../lib/tracking";
   import { fade, fly, slide } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
-  import ScrollingText from "./ScrollingText.svelte";
 
   interface Props {
     show: boolean;
@@ -45,10 +44,11 @@
         </svg>
       </button>
 
-      <ScrollingText
-        text={$_("about.title")}
-        class="text-2xl md:text-3xl font-semibold text-slate-900 mb-6 pr-12 md:pr-0"
-      />
+      <h2
+        class="text-2xl md:text-3xl font-semibold text-slate-900 mb-6 pr-14 md:pr-16 text-wrap"
+      >
+        {$_("about.title")}
+      </h2>
 
       <p class="text-slate-600 mb-10 text-lg leading-relaxed">
         {$_("about.intro")}
