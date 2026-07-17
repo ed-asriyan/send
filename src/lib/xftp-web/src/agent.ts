@@ -96,8 +96,13 @@ export function encryptFileForUpload(source: Uint8Array, fileName: string): Encr
 
 const DEFAULT_REDIRECT_THRESHOLD = 400
 
+export interface ServerProgress {
+  uploaded: number
+  total: number
+}
+
 export interface UploadOptions {
-  onProgress?: (uploaded: number, total: number) => void
+  onProgress?: (uploaded: number, total: number, perServer?: Map<string, ServerProgress>) => void
   redirectThreshold?: number
   readChunk?: (offset: number, size: number) => Promise<Uint8Array>
 }
@@ -125,15 +130,23 @@ export async function uploadFile(
     server: servers[Math.floor(Math.random() * servers.length)]
   }))
   const byServer = new Map<string, typeof chunkJobs>()
+  const perServerMap = new Map<string, ServerProgress>()
+  for (const s of servers) {
+    perServerMap.set(formatXFTPServer(s), { uploaded: 0, total: 0 })
+  }
+
   for (const job of chunkJobs) {
     const key = formatXFTPServer(job.server)
     if (!byServer.has(key)) byServer.set(key, [])
     byServer.get(key)!.push(job)
+    const stats = perServerMap.get(key)
+    if (stats) stats.total += job.spec.chunkSize
   }
 
   // Upload groups in parallel, sequential within each group
   const sentChunks: SentChunk[] = new Array(specs.length)
   let uploaded = 0
+  onProgress?.(0, total, perServerMap)
   await Promise.all([...byServer.values()].map(async (jobs) => {
     for (const {index, spec, server} of jobs) {
       const chunkNo = index + 1
@@ -157,7 +170,10 @@ export async function uploadFile(
         chunkSize: spec.chunkSize, digest: chunkDigest, server
       }
       uploaded += spec.chunkSize
-      onProgress?.(uploaded, total)
+      const key = formatXFTPServer(server)
+      const stats = perServerMap.get(key)
+      if (stats) stats.uploaded += spec.chunkSize
+      onProgress?.(uploaded, total, perServerMap)
     }
   }))
   const rcvDescription = buildDescription("recipient", encrypted, sentChunks)
@@ -265,7 +281,7 @@ export interface RawDownloadedChunk {
 }
 
 export interface DownloadRawOptions {
-  onProgress?: (downloaded: number, total: number) => void
+  onProgress?: (downloaded: number, total: number, perServer?: Map<string, ServerProgress>) => void
   concurrency?: number
 }
 
@@ -288,11 +304,21 @@ export async function downloadFileRaw(
   // Group chunks by server, sequential within each server, parallel across servers
   let downloaded = 0
   const byServer = new Map<string, typeof resolvedFd.chunks>()
+  const perServerMap = new Map<string, ServerProgress>()
+
   for (const chunk of resolvedFd.chunks) {
     const srv = chunk.replicas[0]?.server ?? ""
     if (!byServer.has(srv)) byServer.set(srv, [])
     byServer.get(srv)!.push(chunk)
+
+    if (!perServerMap.has(srv)) {
+      perServerMap.set(srv, { uploaded: 0, total: 0 })
+    }
+    perServerMap.get(srv)!.total += chunk.chunkSize
   }
+
+  onProgress?.(0, resolvedFd.size, perServerMap)
+
   await Promise.all([...byServer.entries()].map(async ([srv, chunks]) => {
     const server = parseXFTPServer(srv)
     for (const chunk of chunks) {
@@ -310,7 +336,9 @@ export async function downloadFileRaw(
         digest: chunk.digest
       })
       downloaded += chunk.chunkSize
-      onProgress?.(downloaded, resolvedFd.size)
+      const stats = perServerMap.get(srv)
+      if (stats) stats.uploaded += chunk.chunkSize
+      onProgress?.(downloaded, resolvedFd.size, perServerMap)
     }
   }))
   return resolvedFd
@@ -319,7 +347,7 @@ export async function downloadFileRaw(
 export async function downloadFile(
   agent: XFTPClientAgent,
   fd: FileDescription,
-  onProgress?: (downloaded: number, total: number) => void
+  onProgress?: (downloaded: number, total: number, perServer?: Map<string, ServerProgress>) => void
 ): Promise<DownloadResult> {
   const chunks: Uint8Array[] = []
   const resolvedFd = await downloadFileRaw(agent, fd, async (raw) => {

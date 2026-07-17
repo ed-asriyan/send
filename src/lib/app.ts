@@ -167,8 +167,24 @@ export class XftpSendApp {
 
         const result = await uploadFile(agent, xftpServers, metadata, {
           readChunk: (off, sz) => backend.readChunk(off, sz),
-          onProgress: (uploaded, total) => {
-             updateProgress(ENCRYPT_WEIGHT + (uploaded / total) * (1 - ENCRYPT_WEIGHT));
+          onProgress: (uploaded, total, perServer) => {
+            if (perServer) {
+              progressMap.forEach(r => {
+                try {
+                  const srvKey = formatXFTPServer(parseXFTPServer(r.server.address));
+                  const stats = perServer.get(srvKey);
+                  if (stats && stats.total > 0) {
+                    const serverPhaseProgress = Math.min(1, stats.uploaded / stats.total);
+                    r.progress.current = (ENCRYPT_WEIGHT + serverPhaseProgress * (1 - ENCRYPT_WEIGHT)) * 100;
+                  } else {
+                    r.progress.current = ENCRYPT_WEIGHT * 100;
+                  }
+                } catch(e) {}
+              });
+              emitter.emit("progress", progressMap);
+            } else {
+              updateProgress(ENCRYPT_WEIGHT + (uploaded / total) * (1 - ENCRYPT_WEIGHT));
+            }
           }
         });
 
@@ -272,8 +288,24 @@ export class XftpSendApp {
             raw.dhSecret, raw.nonce, raw.body, raw.digest, raw.chunkNo
           );
         }, {
-          onProgress: (downloaded, total) => {
-            updateProgress((downloaded / total) * (1 - DECRYPT_WEIGHT));
+          onProgress: (downloaded, total, perServer) => {
+            if (perServer) {
+              progressMap.forEach(r => {
+                try {
+                  const srvKey = formatXFTPServer(parseXFTPServer(r.server.address));
+                  const stats = perServer.get(srvKey);
+                  if (stats && stats.total > 0) {
+                    const serverPhaseProgress = Math.min(1, stats.uploaded / stats.total);
+                    r.progress.current = serverPhaseProgress * (1 - DECRYPT_WEIGHT) * 100;
+                  } else {
+                    r.progress.current = 0;
+                  }
+                } catch(e) {}
+              });
+              emitter.emit("progress", progressMap);
+            } else {
+              updateProgress((downloaded / total) * (1 - DECRYPT_WEIGHT));
+            }
           }
         });
 
