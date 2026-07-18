@@ -48,9 +48,7 @@
   let servers = $state<XftpServer[]>([]);
 
   let hasAvailableServers = $derived(
-    servers.some(
-(s) => s.enabled && (s.status === true || s.status === "checking"),
-),
+    servers.some((s) => s.enabled && s.status === true),
   );
 
   let appAction = $state<
