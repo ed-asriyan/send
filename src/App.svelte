@@ -49,8 +49,8 @@
 
   let hasAvailableServers = $derived(
     servers.some(
-      (s) => s.enabled && (s.status === true || s.status === "checking"),
-    ),
+(s) => s.enabled && (s.status === true || s.status === "checking"),
+),
   );
 
   let appAction = $state<
@@ -210,7 +210,15 @@
         .catch((e) => console.warn("Refresh failed for", s.server.address, e))
         .finally(() => loadServers()),
     );
-    return Promise.all(checks);
+
+    const timeout = isSharedRoute ? 3500 : 350;
+
+    await Promise.race([
+      Promise.all(checks),
+      new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Timeout")), timeout),
+      ),
+    ]).catch(() => {});
   }
 
   onMount(() => {
