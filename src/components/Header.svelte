@@ -16,19 +16,7 @@
   <div
     class="flex items-center gap-2 text-xl font-bold text-slate-800 tracking-tight"
   >
-    <svg
-      class="w-6 h-6 text-indigo-600"
-      fill="none"
-      stroke="currentColor"
-      viewBox="0 0 24 24"
-    >
-      <path
-        stroke-linecap="round"
-        stroke-linejoin="round"
-        stroke-width="2.5"
-        d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
-      ></path>
-    </svg>
+    <span class="text-2xl">🔒</span>
     <ScrollingText text={$_("sidebar.title")} class="max-w-[200px]" />
   </div>
   <div class="flex items-center gap-2">
