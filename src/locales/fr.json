@@ -81,8 +81,8 @@
     "title": "Vos fichiers, parfaitement privés.",
     "intro": "Nous ne nous contentons pas d'envoyer votre fichier. Votre fichier est chiffré directement sur votre appareil, découpé en petits morceaux, et dispersé sur des serveurs indépendants appartenant à différents opérateurs. Aucun serveur ne reçoit le fichier en entier, et personne au monde ne peut deviner sa taille réelle ou son contenu.",
     "split": {
-      "title": "Fichier dispersé parmi différents opérateurs",
-      "desc": "Le fichier n'est pas stocké à un seul endroit. Il est découpé en morceaux qui sont envoyés sur différents serveurs indépendants. Chaque opérateur de serveur ne voit qu'une partie du fichier chiffré et ne peut même pas en deviner la taille réelle. L'opérateur ne sait pas sur quels autres serveurs se trouvent les morceaux restants."
+      "title": "Fichier chiffré dispersé parmi différents opérateurs",
+      "desc": "Le fichier n'est pas stocké à un seul endroit. Il est chiffré, puis découpé en morceaux envoyés sur différents serveurs indépendants. Chaque opérateur de serveur ne voit qu'une partie du fichier chiffré et ne peut même pas en deviner la taille réelle. L'opérateur ne sait pas sur quels autres serveurs se trouvent les morceaux restants."
     },
     "key": {
       "title": "La clé est uniquement dans le lien",

@@ -81,8 +81,8 @@
     "title": "Your files, perfectly private.",
     "intro": "We don't just send your file. Your file is encrypted right on your device, sliced into small chunks, and scattered across independent servers owned by different operators. No single server receives the whole file, so no one in the world can know its contents or even guess its real size.",
     "split": {
-      "title": "File scattered across different operators",
-      "desc": "The file is not stored in one place. It is cut into chunks that are sent to different independent servers. Each server's operator only sees a part of the encrypted file and cannot even guess the real size. The operator doesn't know on which other servers the rest of the chunks are located."
+      "title": "Encrypted file scattered across different operators",
+      "desc": "The file is not stored in one place. It is encrypted and cut into chunks that are sent to different independent servers. Each server's operator only sees a part of the encrypted file and cannot even guess the real size. The operator doesn't know on which other servers the rest of the chunks are located."
     },
     "key": {
       "title": "The key is only in the link",
