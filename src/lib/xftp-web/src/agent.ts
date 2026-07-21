@@ -435,50 +435,72 @@ async function uploadRedirectDescription(
   const yamlBytes = new TextEncoder().encode(yaml)
   const enc = encryptFileForUpload(yamlBytes, "")
   const specs = prepareChunkSpecs(enc.chunkSizes)
-  const sentChunks: SentChunk[] = []
-  for (let i = 0; i < specs.length; i++) {
-    const spec = specs[i]
-    const chunkNo = i + 1
-    const server = servers[Math.floor(Math.random() * servers.length)]
-    const sndKp = generateEd25519KeyPair()
-    const rcvKp = generateEd25519KeyPair()
-    const chunkData = enc.encData.subarray(spec.chunkOffset, spec.chunkOffset + spec.chunkSize)
-    const chunkDigest = getChunkDigest(chunkData)
-    const fileInfo: FileInfo = {
-      sndKey: encodePubKeyEd25519(sndKp.publicKey),
-      size: spec.chunkSize,
-      digest: chunkDigest
+
+  // Upload every redirect chunk to a SINGLE server, so the resulting URL
+  // references just one server address (shorter link). Try servers in random
+  // order; if a server fails mid-upload, discard the partial upload and retry
+  // the whole metafile on the next server. Fails only if every server fails.
+  const candidates = servers.slice()
+  for (let i = candidates.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[candidates[i], candidates[j]] = [candidates[j], candidates[i]]
+  }
+
+  let lastErr: unknown = null
+  for (const server of candidates) {
+    try {
+      const sentChunks: SentChunk[] = []
+      for (let i = 0; i < specs.length; i++) {
+        const spec = specs[i]
+        const chunkNo = i + 1
+        const sndKp = generateEd25519KeyPair()
+        const rcvKp = generateEd25519KeyPair()
+        const chunkData = enc.encData.subarray(spec.chunkOffset, spec.chunkOffset + spec.chunkSize)
+        const chunkDigest = getChunkDigest(chunkData)
+        const fileInfo: FileInfo = {
+          sndKey: encodePubKeyEd25519(sndKp.publicKey),
+          size: spec.chunkSize,
+          digest: chunkDigest
+        }
+        const rcvKeysForChunk = [encodePubKeyEd25519(rcvKp.publicKey)]
+        const {senderId, recipientIds} = await createXFTPChunk(
+          agent, server, sndKp.privateKey, fileInfo, rcvKeysForChunk
+        )
+        await uploadXFTPChunk(agent, server, sndKp.privateKey, senderId, chunkData)
+        sentChunks.push({
+          chunkNo, senderId, senderKey: sndKp.privateKey,
+          recipientId: recipientIds[0], recipientKey: rcvKp.privateKey,
+          chunkSize: spec.chunkSize, digest: chunkDigest, server
+        })
+      }
+      return {
+        party: "recipient",
+        size: enc.chunkSizes.reduce((a, b) => a + b, 0),
+        digest: enc.digest,
+        key: enc.key,
+        nonce: enc.nonce,
+        chunkSize: enc.chunkSizes[0],
+        chunks: sentChunks.map(c => ({
+          chunkNo: c.chunkNo,
+          chunkSize: c.chunkSize,
+          digest: c.digest,
+          replicas: [{
+            server: formatXFTPServer(c.server),
+            replicaId: c.recipientId,
+            replicaKey: encodePrivKeyEd25519(c.recipientKey)
+          }]
+        })),
+        redirect: {size: innerFd.size, digest: innerFd.digest}
+      }
+    } catch (err) {
+      lastErr = err
+      // Server failed mid-upload; discard partial upload and try the next one.
     }
-    const rcvKeysForChunk = [encodePubKeyEd25519(rcvKp.publicKey)]
-    const {senderId, recipientIds} = await createXFTPChunk(
-      agent, server, sndKp.privateKey, fileInfo, rcvKeysForChunk
-    )
-    await uploadXFTPChunk(agent, server, sndKp.privateKey, senderId, chunkData)
-    sentChunks.push({
-      chunkNo, senderId, senderKey: sndKp.privateKey,
-      recipientId: recipientIds[0], recipientKey: rcvKp.privateKey,
-      chunkSize: spec.chunkSize, digest: chunkDigest, server
-    })
   }
-  return {
-    party: "recipient",
-    size: enc.chunkSizes.reduce((a, b) => a + b, 0),
-    digest: enc.digest,
-    key: enc.key,
-    nonce: enc.nonce,
-    chunkSize: enc.chunkSizes[0],
-    chunks: sentChunks.map(c => ({
-      chunkNo: c.chunkNo,
-      chunkSize: c.chunkSize,
-      digest: c.digest,
-      replicas: [{
-        server: formatXFTPServer(c.server),
-        replicaId: c.recipientId,
-        replicaKey: encodePrivKeyEd25519(c.recipientKey)
-      }]
-    })),
-    redirect: {size: innerFd.size, digest: innerFd.digest}
-  }
+  throw new Error(
+    "uploadRedirectDescription: all servers failed" +
+    (lastErr instanceof Error ? ": " + lastErr.message : "")
+  )
 }
 
 // -- Download
