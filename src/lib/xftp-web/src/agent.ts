@@ -3,7 +3,6 @@
 // Combines all building blocks: encryption, chunking, XFTP client commands,
 // file descriptions, and DEFLATE-compressed URI encoding.
 
-import * as pako from "pako"
 import {encryptFile, encodeFileHeader} from "./crypto/file.js"
 import {generateEd25519KeyPair, encodePubKeyEd25519, encodePrivKeyEd25519, decodePrivKeyEd25519, ed25519KeyPairFromSeed} from "./crypto/keys.js"
 import {sha512Streaming} from "./crypto/digest.js"
@@ -11,7 +10,7 @@ import {prepareChunkSizes, prepareChunkSpecs, getChunkDigest, fileSizeLen, authT
 import {
   encodeFileDescription, decodeFileDescription, validateFileDescription,
   base64urlEncode, base64urlDecode,
-  type FileDescription
+  type FileDescription, type FileParty, type FileChunk, type RedirectFileInfo
 } from "./protocol/description.js"
 import type {FileInfo} from "./protocol/commands.js"
 import {
@@ -88,18 +87,180 @@ export interface DownloadResult {
   content: Uint8Array
 }
 
-// -- URI encoding/decoding (RFC section 4.1: DEFLATE + base64url)
+// -- URI encoding/decoding (compact binary + base64url)
+//
+// App-internal format for the URL hash. Replaces the previous
+// "YAML -> DEFLATE -> base64url" scheme, which double-encoded every
+// cryptographic field as base64 text before compressing. This binary
+// layout stores raw bytes once and drops fully-derivable data:
+//   * chunkNo         -> reconstructed as (index + 1)
+//   * replica count   -> always 1 (asserted on encode)
+//   * per-chunk size   -> stored only when it differs from the default
+//   * private keys      -> raw 32-byte Ed25519 seed instead of 48-byte DER
+//   * server addresses  -> deduplicated into a table, referenced by index
+//
+// Not interchangeable with standard SimpleX YAML descriptors. The redirect
+// file payload still uses the YAML encoder (see uploadRedirectDescription).
+
+const URI_FORMAT_VERSION = 1
+const FLAG_PARTY_SENDER = 1
+const FLAG_HAS_REDIRECT = 2
+
+class ByteWriter {
+  private buf: number[] = []
+  u8(n: number): void { this.buf.push(n & 0xff) }
+  varint(n: number): void {
+    if (!Number.isSafeInteger(n) || n < 0) throw new Error("varint: invalid value " + n)
+    while (n > 0x7f) {
+      this.buf.push((n % 128) | 0x80)
+      n = Math.floor(n / 128)
+    }
+    this.buf.push(n)
+  }
+  bytes(b: Uint8Array): void { for (let i = 0; i < b.length; i++) this.buf.push(b[i]) }
+  lenBytes(b: Uint8Array): void { this.varint(b.length); this.bytes(b) }
+  lenStr(s: string): void { this.lenBytes(new TextEncoder().encode(s)) }
+  toUint8Array(): Uint8Array { return new Uint8Array(this.buf) }
+}
+
+class ByteReader {
+  private pos = 0
+  constructor(private data: Uint8Array) {}
+  u8(): number {
+    if (this.pos >= this.data.length) throw new Error("ByteReader: unexpected end of data")
+    return this.data[this.pos++]
+  }
+  varint(): number {
+    let result = 0, mul = 1, b: number
+    do {
+      b = this.u8()
+      result += (b & 0x7f) * mul
+      mul *= 128
+      if (mul > Number.MAX_SAFE_INTEGER) throw new Error("varint: value too large")
+    } while (b & 0x80)
+    return result
+  }
+  bytes(n: number): Uint8Array {
+    if (this.pos + n > this.data.length) throw new Error("ByteReader: unexpected end of data")
+    const out = this.data.slice(this.pos, this.pos + n)
+    this.pos += n
+    return out
+  }
+  lenBytes(): Uint8Array { return this.bytes(this.varint()) }
+  lenStr(): string { return new TextDecoder().decode(this.lenBytes()) }
+}
 
 export function encodeDescriptionURI(fd: FileDescription): string {
-  const yaml = encodeFileDescription(fd)
-  const compressed = pako.deflateRaw(new TextEncoder().encode(yaml))
-  return base64urlEncode(compressed)
+  if (fd.digest.length !== 64) throw new Error("encodeDescriptionURI: file digest must be 64 bytes")
+  if (fd.key.length !== 32) throw new Error("encodeDescriptionURI: key must be 32 bytes")
+  if (fd.nonce.length !== 24) throw new Error("encodeDescriptionURI: nonce must be 24 bytes")
+
+  const w = new ByteWriter()
+  w.u8(URI_FORMAT_VERSION)
+  let flags = 0
+  if (fd.party === "sender") flags |= FLAG_PARTY_SENDER
+  if (fd.redirect !== null) flags |= FLAG_HAS_REDIRECT
+  w.u8(flags)
+  w.varint(fd.size)
+  w.varint(fd.chunkSize)
+  w.bytes(fd.digest)
+  w.bytes(fd.key)
+  w.bytes(fd.nonce)
+  if (fd.redirect !== null) {
+    if (fd.redirect.digest.length !== 64) throw new Error("encodeDescriptionURI: redirect digest must be 64 bytes")
+    w.varint(fd.redirect.size)
+    w.bytes(fd.redirect.digest)
+  }
+
+  // Deduplicate server addresses into a table referenced by index.
+  const serverIndex = new Map<string, number>()
+  const servers: string[] = []
+  for (const c of fd.chunks) {
+    for (const r of c.replicas) {
+      if (!serverIndex.has(r.server)) {
+        serverIndex.set(r.server, servers.length)
+        servers.push(r.server)
+      }
+    }
+  }
+  w.varint(servers.length)
+  for (const s of servers) {
+    const srv = parseXFTPServer(s)
+    if (srv.keyHash.length !== 32) throw new Error("encodeDescriptionURI: server keyHash must be 32 bytes")
+    w.bytes(srv.keyHash)
+    w.lenStr(srv.host)
+    w.lenStr(srv.port)
+  }
+
+  w.varint(fd.chunks.length)
+  for (let i = 0; i < fd.chunks.length; i++) {
+    const c = fd.chunks[i]
+    if (c.chunkNo !== i + 1) throw new Error("encodeDescriptionURI: chunk numbers are not sequential")
+    if (c.replicas.length !== 1) throw new Error("encodeDescriptionURI: expected exactly one replica per chunk")
+    if (c.digest.length !== 32) throw new Error("encodeDescriptionURI: chunk digest must be 32 bytes")
+    const r = c.replicas[0]
+    w.varint(serverIndex.get(r.server)!)
+    w.varint(c.chunkSize === fd.chunkSize ? 0 : c.chunkSize)
+    w.bytes(c.digest)
+    w.lenBytes(r.replicaId)
+    w.bytes(decodePrivKeyEd25519(r.replicaKey)) // 32-byte Ed25519 seed
+  }
+
+  // Strip '=' padding: base64urlDecode tolerates its absence and it only adds
+  // visual noise to the URL. Keeps the fragment as clean [A-Za-z0-9-_].
+  return base64urlEncode(w.toUint8Array()).replace(/=+$/, "")
 }
 
 export function decodeDescriptionURI(fragment: string): FileDescription {
-  const compressed = base64urlDecode(fragment)
-  const yaml = new TextDecoder().decode(pako.inflateRaw(compressed))
-  const fd = decodeFileDescription(yaml)
+  const r = new ByteReader(base64urlDecode(fragment))
+  const version = r.u8()
+  if (version !== URI_FORMAT_VERSION) throw new Error("decodeDescriptionURI: unsupported format version " + version)
+  const flags = r.u8()
+  const party: FileParty = (flags & FLAG_PARTY_SENDER) ? "sender" : "recipient"
+  const hasRedirect = (flags & FLAG_HAS_REDIRECT) !== 0
+  const size = r.varint()
+  const chunkSize = r.varint()
+  const digest = r.bytes(64)
+  const key = r.bytes(32)
+  const nonce = r.bytes(24)
+  let redirect: RedirectFileInfo | null = null
+  if (hasRedirect) {
+    const rSize = r.varint()
+    const rDigest = r.bytes(64)
+    redirect = {size: rSize, digest: rDigest}
+  }
+
+  const serverCount = r.varint()
+  const servers: string[] = []
+  for (let i = 0; i < serverCount; i++) {
+    const keyHash = r.bytes(32)
+    const host = r.lenStr()
+    const port = r.lenStr()
+    servers.push(formatXFTPServer({keyHash, host, port}))
+  }
+
+  const chunkCount = r.varint()
+  const chunks: FileChunk[] = []
+  for (let i = 0; i < chunkCount; i++) {
+    const serverIdx = r.varint()
+    if (serverIdx >= servers.length) throw new Error("decodeDescriptionURI: server index out of range")
+    const rawChunkSize = r.varint()
+    const chunkDigest = r.bytes(32)
+    const replicaId = r.lenBytes()
+    const seed = r.bytes(32)
+    chunks.push({
+      chunkNo: i + 1,
+      chunkSize: rawChunkSize === 0 ? chunkSize : rawChunkSize,
+      digest: chunkDigest,
+      replicas: [{
+        server: servers[serverIdx],
+        replicaId,
+        replicaKey: encodePrivKeyEd25519(seed) // rebuild 48-byte DER
+      }]
+    })
+  }
+
+  const fd: FileDescription = {party, size, digest, key, nonce, chunkSize, chunks, redirect}
   const err = validateFileDescription(fd)
   if (err) throw new Error("decodeDescriptionURI: " + err)
   return fd
