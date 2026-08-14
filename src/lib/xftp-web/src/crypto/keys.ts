@@ -2,7 +2,7 @@
 
 import sodium from "libsodium-wrappers-sumo"
 await sodium.ready
-import {ed448} from "@noble/curves/ed448"
+import {ed448} from "@noble/curves/ed448.js"
 import {sha256} from "./digest.js"
 import {concatBytes} from "../protocol/encoding.js"
 
