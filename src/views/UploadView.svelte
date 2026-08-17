@@ -1,6 +1,7 @@
 <script lang="ts">
   import { _ } from "../lib/i18n";
   import { trackEvent } from "../lib/tracking";
+  import { onMount } from "svelte";
   import ScrollingText from "../components/ScrollingText.svelte";
 
   interface Props {
@@ -11,6 +12,41 @@
   let isDragging = $state(false);
   let isUploading = $state(false);
   let fileInput: HTMLInputElement;
+
+  function handleFileChangeNative(e: Event) {
+    if (isUploading) return;
+    try {
+      const files = fileInput?.files;
+      if (files?.length) {
+        isUploading = true;
+        const file = files[0];
+
+        Promise.resolve(onUpload(file)).finally(() => {
+          isUploading = false;
+          if (fileInput) fileInput.value = "";
+        });
+      }
+    } catch (err) {
+      console.warn("Change event handler error:", err);
+    }
+  }
+
+  function stopPropagation(e: Event) {
+    e.stopPropagation();
+  }
+
+  onMount(() => {
+    if (fileInput) {
+      fileInput.addEventListener("change", handleFileChangeNative);
+      fileInput.addEventListener("click", stopPropagation);
+    }
+    return () => {
+      if (fileInput) {
+        fileInput.removeEventListener("change", handleFileChangeNative);
+        fileInput.removeEventListener("click", stopPropagation);
+      }
+    };
+  });
 
   function handleDragOver(e: DragEvent) {
     if (isUploading) return;
@@ -33,20 +69,6 @@
         await onUpload(e.dataTransfer.files[0]);
       } finally {
         isUploading = false;
-      }
-    }
-  }
-
-  async function handleFileChange(e: Event) {
-    if (isUploading) return;
-    const target = e.target as HTMLInputElement;
-    if (target.files?.length) {
-      isUploading = true;
-      try {
-        await onUpload(target.files[0]);
-      } finally {
-        isUploading = false;
-        fileInput.value = "";
       }
     }
   }
@@ -97,12 +119,7 @@
       class="text-xl md:text-2xl font-medium text-slate-800 mb-2 justify-center w-full"
     />
     <p class="text-slate-500 text-sm mb-8">{$_("upload.subtitle")}</p>
-    <input
-      type="file"
-      bind:this={fileInput}
-      onchange={handleFileChange}
-      class="hidden"
-    />
+    <input type="file" bind:this={fileInput} class="hidden" />
     <button
       disabled={isUploading}
       class="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-8 rounded-full shadow-lg shadow-indigo-500/20 transition-all active:scale-95 text-sm md:text-base disabled:bg-indigo-400 disabled:active:scale-100"
