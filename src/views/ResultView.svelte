@@ -157,7 +157,7 @@
       });
       isQrExpanded = !isQrExpanded;
     }}
-    class="bg-white rounded-3xl shadow-sm inline-block mb-6 cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] focus:outline-none {isQrExpanded
+    class="relative group bg-white rounded-3xl shadow-sm inline-block mb-6 cursor-pointer transition-all duration-300 ease-[cubic-bezier(0.23,1,0.32,1)] hover:scale-[1.02] hover:shadow-md focus:outline-none {isQrExpanded
       ? 'w-full p-6 sm:p-8'
       : 'p-4'}"
     aria-label="Toggle QR Code Size"
@@ -170,6 +170,49 @@
           ? 'w-full h-auto'
           : 'w-[140px] h-[140px]'}"
       />
+      {#if !isQrExpanded}
+        <div
+          class="absolute inset-0 flex items-center justify-center bg-slate-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-3xl pointer-events-none"
+        >
+          <div
+            class="bg-white/90 backdrop-blur-sm shadow-sm rounded-full p-2 text-slate-600 transition-transform duration-300 scale-90 group-hover:scale-100"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              ><path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4"
+              ></path></svg
+            >
+          </div>
+        </div>
+      {:else}
+        <div
+          class="absolute inset-0 flex items-center justify-center bg-slate-900/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-3xl pointer-events-none"
+        >
+          <div
+            class="bg-white/90 backdrop-blur-sm shadow-sm rounded-full p-2 text-slate-600 transition-transform duration-300 scale-90 group-hover:scale-100"
+          >
+            <svg
+              class="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              ><path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 15v4m0-4H5m4 0l-5 5M15 9V5m0 4h4m-4 0l5-5M9 9l-5-5m5 5V5m0 4H5m10 6l5 5m-5-5v4m0-4h4"
+              ></path></svg
+            >
+          </div>
+        </div>
+      {/if}
     {/if}
   </button>
 
