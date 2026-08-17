@@ -93,7 +93,7 @@
         class="p-6 md:p-8 flex items-center justify-between shrink-0 border-b border-black/5"
       >
         <h2 class="text-2xl font-medium text-slate-800 tracking-tight">
-          {$_("sidebar.title")}
+          {$_("settings.title")}
         </h2>
         <button
           type="button"
@@ -120,13 +120,13 @@
         <div
           class="px-6 pt-6 pb-2 text-xs font-semibold text-slate-400 uppercase tracking-widest"
         >
-          {$_("sidebar.servers")}
+          {$_("settings.servers")}
         </div>
 
-        <div class="flex-1 overflow-y-auto px-4 space-y-1">
+        <div class="flex-1 overflow-y-auto px-4 grid grid-cols-1 sm:grid-cols-2 gap-2 content-start min-h-[140px]">
           {#if servers.length === 0}
             <div
-              class="h-full flex flex-col items-center justify-center p-8 text-center"
+              class="col-span-full h-full flex flex-col items-center justify-center p-8 text-center"
               in:fade={{ duration: 300 }}
             >
               <div
@@ -137,7 +137,7 @@
               <p
                 class="text-sm text-slate-400 font-medium leading-relaxed max-w-[200px]"
               >
-                {$_("sidebar.empty_list")}
+                {$_("settings.empty_list")}
               </p>
             </div>
           {:else}
@@ -177,10 +177,10 @@
                           : 'bg-emerald-400'}"
                     ></span>
                     {isChecking
-                      ? $_("sidebar.status.checking")
+                      ? $_("settings.status.checking")
                       : isError
-                        ? $_("sidebar.status.offline")
-                        : $_("sidebar.status.online")}
+                        ? $_("settings.status.offline")
+                        : $_("settings.status.online")}
                   </div>
                 </div>
 
@@ -193,7 +193,7 @@
                     rel="noopener noreferrer"
                     onclick={(e) => e.stopPropagation()}
                     class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-full transition-colors"
-                    title={$_("sidebar.tooltips.view_info")}
+                    title={$_("settings.tooltips.view_info")}
                   >
                     <svg
                       class="w-4 h-4"
@@ -216,7 +216,7 @@
                       onRefreshServer(srv.server.address);
                     }}
                     class="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-white rounded-full transition-colors"
-                    title={$_("sidebar.tooltips.check")}
+                    title={$_("settings.tooltips.check")}
                   >
                     <svg
                       class="w-4 h-4"
@@ -239,7 +239,7 @@
                         onRemoveServer(srv.server.address);
                       }}
                       class="p-1.5 text-slate-400 hover:text-red-600 hover:bg-white rounded-full transition-colors"
-                      title={$_("sidebar.tooltips.remove")}
+                      title={$_("settings.tooltips.remove")}
                     >
                       <svg
                         class="w-4 h-4"
@@ -273,7 +273,7 @@
             <span
               class="group-hover:text-indigo-600 transition-colors text-left"
             >
-              {$_("sidebar.community_auto_fetch")}
+              {$_("settings.community_auto_fetch")}
             </span>
             <div
               class="shrink-0 relative w-10 h-6 rounded-full transition-colors flex items-center px-1 {useCommunityServers
@@ -323,17 +323,17 @@
                     d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                   ></path>
                 </svg>
-                {$_("sidebar.community_fetching")}
+                {$_("settings.community_fetching")}
               {:else}
                 <span class="mr-1.5">🌍</span>
-                {$_("sidebar.community_fetch")}
+                {$_("settings.community_fetch")}
               {/if}
             </button>
             <button
               type="button"
               onclick={onClearCommunity}
               class="px-3 py-2 text-xs rounded-full bg-white/20 hover:bg-red-50 hover:border-red-200 border border-white/50 backdrop-blur-md shadow-sm transition-all text-slate-700 hover:text-red-600 font-medium hover:scale-[1.02] active:scale-95 flex items-center justify-center"
-              title={$_("sidebar.community_clear")}
+              title={$_("settings.community_clear")}
             >
               <svg
                 class="w-4 h-4"
@@ -350,73 +350,35 @@
             </button>
           </div>
 
-          {#if isAddFormOpen}
-            <form
-              onsubmit={handleAddServer}
-              class="flex flex-col gap-4"
-              in:slide={{ duration: 250, easing: cubicOut }}
-            >
-              <input
-                type="text"
-                bind:value={newServerInput}
-                placeholder={$_("sidebar.inputs.placeholder")}
-                class="w-full px-4 py-3 text-sm gemini-input rounded-2xl outline-none placeholder:text-slate-400 font-mono"
-                required
-                autofocus
-              />
-              <div class="flex gap-2">
-                <button
-                  type="button"
-                  onclick={() => {
-                    isAddFormOpen = false;
-                    newServerInput = "";
-                  }}
-                  class="bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-700 py-3 px-4 rounded-full transition-colors flex items-center justify-center"
-                  title={$_("confirm.cancel")}
-                >
-                  <svg
-                    class="w-4 h-4 mx-auto"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                    ><path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    ></path></svg
-                  >
-                </button>
-                <button
-                  type="submit"
-                  disabled={isAdding || !isNewServerValid}
-                  class="flex-1 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium py-3 px-4 rounded-full transition-colors shadow-md shadow-slate-900/10 disabled:opacity-50"
-                >
-                  {isAdding
-                    ? $_("sidebar.inputs.adding")
-                    : $_("sidebar.inputs.add_server")}
-                </button>
-              </div>
-              <div class="text-center -mt-2">
-                <a
-                  href="https://github.com/ed-asriyan/simplex-servers-docker#-quick-start-xftp-server"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  class="text-xs text-slate-400 hover:text-slate-600 transition-colors"
-                >
-                  {$_("sidebar.inputs.how_to_create")}
-                </a>
-              </div>
-            </form>
-          {:else}
+          <form onsubmit={handleAddServer} class="flex flex-col gap-4">
+            <input
+              type="text"
+              bind:value={newServerInput}
+              placeholder={$_("settings.inputs.placeholder")}
+              class="w-full px-4 py-3 text-sm gemini-input rounded-2xl outline-none placeholder:text-slate-400 font-mono"
+              required
+            />
             <button
-              type="button"
-              onclick={() => (isAddFormOpen = true)}
-              class="w-full border-2 border-dashed border-slate-200 text-slate-500 hover:text-slate-700 hover:border-slate-300 hover:bg-white/50 text-sm font-medium py-3 px-4 rounded-full transition-all duration-300"
+              type="submit"
+              disabled={isAdding ||
+                (newServerInput.trim() !== "" && !isNewServerValid)}
+              class="w-full bg-slate-500 hover:bg-slate-600 text-white text-sm font-medium py-3 px-4 rounded-full transition-colors shadow-md disabled:opacity-50"
             >
-              + {$_("sidebar.inputs.add_server")}
+              {isAdding
+                ? $_("settings.inputs.adding")
+                : $_("settings.inputs.add_server")}
             </button>
-          {/if}
+            <div class="text-center -mt-2">
+              <a
+                href="https://github.com/ed-asriyan/simplex-servers-docker#-quick-start-xftp-server"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="text-xs text-slate-400 hover:text-slate-600 transition-colors"
+              >
+                {$_("settings.inputs.how_to_create")}
+              </a>
+            </div>
+          </form>
         </div>
       </div>
       <!-- End Body -->

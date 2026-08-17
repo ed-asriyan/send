@@ -16,7 +16,7 @@
   } from "./lib/models";
   import AmbientBackground from "./components/AmbientBackground.svelte";
   import Header from "./components/Header.svelte";
-  import Sidebar from "./components/Sidebar.svelte";
+  import SettingsModal from "./components/SettingsModal.svelte";
   import UploadView from "./views/UploadView.svelte";
   import NoServersView from "./views/NoServersView.svelte";
   import ProgressView from "./views/ProgressView.svelte";
@@ -37,7 +37,7 @@
 
   // State (Svelte 5 Runes)
   let currentView = $state<ViewType>("progress");
-  let isSidebarOpen = $state(false);
+  let isSettingsModalOpen = $state(false);
   let showAbout = $state(false);
 
   let isDownloadMode = $state(false);
@@ -381,15 +381,15 @@
 
 <Header
   showMenuButton={currentView === "upload"}
-  onMenuClick={() => (isSidebarOpen = true)}
+  onMenuClick={() => (isSettingsModalOpen = true)}
 />
 
 <div class="flex flex-1 min-h-0 relative flex-col md:flex-row w-full">
-  <!-- Left Sidebar -->
-  <Sidebar
+  <!-- Settings Modal -->
+  <SettingsModal
     show={currentView === "upload"}
-    isOpen={isSidebarOpen}
-    onClose={() => (isSidebarOpen = false)}
+    isOpen={isSettingsModalOpen}
+    onClose={() => (isSettingsModalOpen = false)}
     {servers}
     {useCommunityServers}
     onToggleCommunityServers={handleToggleCommunityServers}
@@ -422,7 +422,7 @@
               {#if hasAvailableServers}
                 <UploadView onUpload={handleUpload} />
               {:else}
-                <NoServersView hasServers={servers.length > 0} />
+                <NoServersView hasServers={servers.length > 0} onOpenSettings={() => (isSettingsModalOpen = true)} />
               {/if}
             {:else if currentView === "progress"}
               <ProgressView
@@ -474,6 +474,18 @@
       <div
         class="mt-8 md:mt-12 flex flex-col md:flex-row items-center gap-1.5 md:gap-3 w-full justify-center shrink-0 z-10"
       >
+        <button type="button" onclick={() => (isSettingsModalOpen = true)} class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:text-slate-700 hover:bg-white/40 transition-colors duration-300 cursor-pointer text-xs font-medium text-slate-500 outline-none">
+          {#if hasAvailableServers}
+            <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+            <span>{$_("app.network_connected")}</span>
+          {:else}
+            <div class="w-2 h-2 rounded-full bg-slate-300"></div>
+            <span>{$_("app.network_offline")}</span>
+          {/if}
+        </button>
+
+        <div class="hidden md:block w-1 h-1 rounded-full bg-slate-300"></div>
+
         <!-- SimpleX -->
         <a
           href="https://simplexnetwork.org"

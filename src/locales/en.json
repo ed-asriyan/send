@@ -1,13 +1,14 @@
 {
+  "title": "Send",
   "app": {
     "initializing": "Initializing...",
     "locating_map": "Getting metadata...",
     "unknown_file": "Unknown file",
-    "downloading": "Downloading: {filename}",
-    "decrypting": "Decrypting and reassembling file...",
+    "downloading": "Ready to download: {filename}",
+    "decrypting": "Receiving and decrypting...",
     "download_error": "Download error: {error}",
     "uploading": "Sending: {filename}",
-    "distributing": "Sending encrypted chunks to servers...",
+    "distributing": "Encrypting and uploading...",
     "upload_error": "Upload error: {error}",
     "how_it_works": "Why is it secure?",
     "powered_by": "Powered by SimpleX Network",
@@ -15,17 +16,19 @@
     "init_error": "Initialization error: {error}",
     "add_server_error": "Failed to add server: {error}",
     "preparing_share": "Preparing your file...",
-    "connecting_servers": "Connecting to servers..."
+    "connecting_servers": "Connecting to servers...",
+    "network_connected": "Network Connected",
+    "network_offline": "Network Offline"
   },
   "upload": {
     "preparing": "Preparing...",
-    "title": "Send file",
+    "title": "Upload file",
     "subtitle": "Drag file here or click to browse",
     "processing": "Processing...",
     "button": "Select file"
   },
-  "sidebar": {
-    "title": "Send",
+  "settings": {
+    "title": "Settings",
     "servers": "Servers",
     "status": {
       "checking": "Checking",
@@ -44,7 +47,7 @@
       "how_to_create": "How to create your own server"
     },
     "community_auto_fetch": "Fetch servers on startup",
-    "community_fetch": "Fetch servers",
+    "community_fetch": "Fetch servers from catalog",
     "community_fetching": "Fetching...",
     "community_clear": "Remove community servers",
     "empty_list": "Server list is empty. Add servers manually or fetch them from the community."
@@ -66,11 +69,12 @@
   "no_servers": {
     "title_active": "No active servers",
     "title_empty": "Server list is empty",
-    "subtitle_active": "No servers available to send files. Enable at least one server in the menu.",
-    "subtitle_empty": "You haven't added any servers yet. Add them in the left menu to start."
+    "subtitle_active": "No servers available to send files.",
+    "open_settings": "Open settings to add servers",
+    "subtitle_empty": "You haven't added any servers yet. Add them in the settings to get started."
   },
   "result": {
-    "title": "File uploaded",
+    "title": "File uploaded. Link ready.",
     "subtitle": "Share this link with the recipient. Typically, the link is valid for 48 hours.",
     "copy": "Copy",
     "share": "Share",

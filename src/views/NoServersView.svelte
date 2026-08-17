@@ -3,8 +3,9 @@
   import ScrollingText from "../components/ScrollingText.svelte";
   interface Props {
     hasServers: boolean;
+    onOpenSettings: () => void;
   }
-  let { hasServers }: Props = $props();
+  let { hasServers, onOpenSettings }: Props = $props();
 </script>
 
 <div
@@ -14,7 +15,7 @@
     class="w-full border-2 border-dashed rounded-[2rem] p-10 md:p-16 border-amber-200/50 bg-amber-50/10 flex flex-col items-center min-w-0"
   >
     <div
-      class="w-16 h-16 mb-6 rounded-full bg-amber-100/50 flex items-center justify-center"
+      class="w-16 h-16 mb-4 rounded-full bg-amber-100/50 flex items-center justify-center"
     >
       <svg
         class="w-8 h-8 text-amber-600"
@@ -36,12 +37,19 @@
         : $_("no_servers.title_empty")}
       class="text-xl md:text-2xl font-medium text-slate-800 mb-2 justify-center w-full"
     />
-    <p class="text-slate-500 text-sm max-w-sm">
+    <p class="text-slate-500 text-sm max-w-sm mb-6">
       {#if hasServers}
         {$_("no_servers.subtitle_active")}
       {:else}
         {$_("no_servers.subtitle_empty")}
       {/if}
     </p>
+
+    <button
+      onclick={onOpenSettings}
+      class="text-sm font-medium text-indigo-600 hover:text-indigo-700 bg-indigo-50 hover:bg-indigo-100 px-6 py-2.5 rounded-full transition-colors active:scale-95"
+    >
+      {$_("no_servers.open_settings")}
+    </button>
   </div>
 </div>

@@ -1,4 +1,5 @@
 {
+  "title": "Send",
   "app": {
     "initializing": "Initialisation...",
     "locating_map": "Obtention des métadonnées...",
@@ -24,8 +25,8 @@
     "processing": "Traitement...",
     "button": "Sélectionner un fichier"
   },
-  "sidebar": {
-    "title": "Send",
+  "settings": {
+    "title": "Paramètres",
     "servers": "Serveurs",
     "status": {
       "checking": "Vérification",
