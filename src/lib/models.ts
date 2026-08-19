@@ -1,3 +1,5 @@
+import { isDarknetHost } from "./xftp-web/src/protocol/address";
+
 export class EventEmitter<T = any> {
   private events: Record<string, ((...args: any[]) => void)[]>;
 
@@ -21,6 +23,13 @@ export class XftpServerAddress {
   private constructor(url: URL) {
     this.url = url;
     this.address = decodeURIComponent(url.toString());
+  }
+
+  public getWebOrigin(): string {
+    const isDarknet = isDarknetHost(this.url.hostname);
+    const protocol = isDarknet ? 'http:' : 'https:';
+    const port = this.url.port ? `:${this.url.port}` : '';
+    return `${protocol}//${this.url.hostname}${port}`;
   }
 
   public static create(address: string): XftpServerAddress {

@@ -123,7 +123,9 @@
           {$_("settings.servers")}
         </div>
 
-        <div class="flex-1 overflow-y-auto px-4 grid grid-cols-1 sm:grid-cols-2 gap-2 content-start min-h-[140px]">
+        <div
+          class="flex-1 overflow-y-auto px-4 grid grid-cols-1 sm:grid-cols-2 gap-2 content-start min-h-[140px]"
+        >
           {#if servers.length === 0}
             <div
               class="col-span-full h-full flex flex-col items-center justify-center p-8 text-center"
@@ -188,7 +190,7 @@
                   class="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                 >
                   <a
-                    href={`https://${srv.server.url.host}`}
+                    href={srv.server.getWebOrigin()}
                     target="_blank"
                     rel="noopener noreferrer"
                     onclick={(e) => e.stopPropagation()}

@@ -4,11 +4,12 @@
   import { fly, slide } from "svelte/transition";
   import { cubicOut } from "svelte/easing";
   import ScrollingText from "../components/ScrollingText.svelte";
+  import type { XftpServerAddress } from "../lib/models";
 
   interface Props {
     title: string;
     description: string;
-    servers: string[];
+    servers: XftpServerAddress[];
     onCancel: () => void | Promise<void>;
     onConfirm: () => void | Promise<void>;
   }
@@ -81,12 +82,12 @@
             <div class="flex items-center gap-3">
               <div class="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></div>
               <a
-                href={"https://" + server}
+                href={server.getWebOrigin()}
                 target="_blank"
                 rel="noopener noreferrer"
                 class="hover:underline cursor-pointer flex-1 min-w-0"
               >
-                <ScrollingText text={server} class="w-full" />
+                <ScrollingText text={server.url.host} class="w-full" />
               </a>
             </div>
           {/each}

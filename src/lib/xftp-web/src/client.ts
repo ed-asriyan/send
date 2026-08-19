@@ -21,7 +21,7 @@ import {
 } from "./protocol/commands.js"
 import {decryptReceivedChunk} from "./download.js"
 import type {XFTPServer} from "./protocol/address.js"
-import {formatXFTPServer} from "./protocol/address.js"
+import {formatXFTPServer, serverOrigin} from "./protocol/address.js"
 import {concatBytes} from "./protocol/encoding.js"
 import {blockUnpad} from "./protocol/transmission.js"
 
@@ -246,7 +246,7 @@ export function closeXFTPAgent(agent: XFTPClientAgent): void {
 
 async function connectXFTP(server: XFTPServer, config?: Partial<TransportConfig>): Promise<XFTPClient> {
   const cfg: TransportConfig = {...DEFAULT_TRANSPORT_CONFIG, ...config}
-  const baseUrl = "https://" + server.host + ":" + server.port
+  const baseUrl = serverOrigin(server)
   const transport = await createTransport(baseUrl, cfg)
 
   try {

@@ -188,7 +188,7 @@
                   class="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity"
                 >
                   <a
-                    href={`https://${srv.server.url.host}`}
+                    href={srv.server.getWebOrigin()}
                     target="_blank"
                     rel="noopener noreferrer"
                     onclick={(e) => e.stopPropagation()}

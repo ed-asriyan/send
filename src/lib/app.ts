@@ -66,7 +66,7 @@ export class XftpSendApp {
     if (server) {
       try {
         server.status = "checking";
-        const response = await fetch(`https://${server.server.url.host}`, { method: "OPTIONS" }).catch(() => null);
+        const response = await fetch(`${server.server.getWebOrigin()}`, { method: "OPTIONS" }).catch(() => null);
         server.status = response ? response.ok : false;
       } catch (e) {
         server.status = false;

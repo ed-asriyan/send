@@ -32,7 +32,7 @@
       const stats = item.progress;
       return {
         name: item.server.url.hostname,
-        link: `https://${item.server.url.host}`,
+        link: item.server.getWebOrigin(),
         y: step * (i + 1),
         // Calculate percentage (0-100)
         percent: stats?.max ? Math.round((stats.current / stats.max) * 100) : 0,

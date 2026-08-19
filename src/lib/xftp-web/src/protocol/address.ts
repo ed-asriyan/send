@@ -68,7 +68,17 @@ export function getDescriptionServers(fd: {chunks: {replicas: {server: string}[]
   return servers
 }
 
-// Build an HTTPS origin from an XFTP server address.
+export function isDarknetHost(host: string): boolean {
+  if (host.endsWith('.onion')) return true
+  if (host.endsWith('.i2p')) return true
+  if (host.endsWith('.ygg')) return true
+  if (/^\[?0?[23][0-9a-f]{2}:/i.test(host)) return true
+  return false
+}
+
+// Build an HTTP(S) origin from an XFTP server address.
 export function serverOrigin(server: XFTPServer): string {
-  return server.port === "443" ? `https://${server.host}` : `https://${server.host}:${server.port}`
+  const protocol = isDarknetHost(server.host) ? 'http' : 'https'
+  const defaultPort = protocol === 'https' ? '443' : '80'
+  return server.port === defaultPort ? `${protocol}://${server.host}` : `${protocol}://${server.host}:${server.port}`
 }
