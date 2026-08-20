@@ -381,6 +381,12 @@
     }
   }
 
+  function handleConnectionStatusClick() {
+    if (currentView === "upload") {
+      isSettingsModalOpen = true;
+    }
+  }
+
   const networkMode = getCurrentNetworkMode();
 </script>
 
@@ -505,7 +511,7 @@
       >
         <button
           type="button"
-          onclick={() => (isSettingsModalOpen = true)}
+          onclick={handleConnectionStatusClick}
           class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:text-slate-700 hover:bg-white/40 transition-colors duration-300 cursor-pointer text-xs font-medium text-slate-500 outline-none"
         >
           {#if hasAvailableServers}
