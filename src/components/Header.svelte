@@ -2,12 +2,15 @@
   import { _ } from "../lib/i18n";
   import LanguageSwitcher from "./LanguageSwitcher.svelte";
   import ScrollingText from "./ScrollingText.svelte";
+  import { getCurrentNetworkIcon } from "../lib/networkMode";
 
   interface Props {
     onMenuClick?: () => void;
     showMenuButton?: boolean;
   }
   let { onMenuClick, showMenuButton = true }: Props = $props();
+
+  const networkIcon = getCurrentNetworkIcon();
 </script>
 
 <header
@@ -16,7 +19,7 @@
   <div
     class="flex items-center gap-2 text-xl font-bold text-slate-800 tracking-tight"
   >
-    <span class="text-2xl">🔒</span>
+    <span class="text-2xl">{networkIcon}</span>
     <ScrollingText text={$_("title")} class="max-w-[200px]" />
   </div>
   <div class="flex items-center gap-2">

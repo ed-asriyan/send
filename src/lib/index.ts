@@ -8,3 +8,4 @@ export class XftpSend extends XftpSendApp {
 
 export * from './app';
 export * from './community';
+export * from './networkMode';

@@ -2,6 +2,7 @@
   import { _ } from "../lib/i18n";
   import type { FileTransferStatus } from "../lib/models";
   import ScrollingText from "./ScrollingText.svelte";
+  import { getCurrentNetworkIcon } from "../lib/networkMode";
 
   interface Props {
     progress: FileTransferStatus;
@@ -9,6 +10,8 @@
   }
 
   let { progress = [], mode = "upload" }: Props = $props();
+
+  const networkIcon = getCurrentNetworkIcon();
 
   let containerWidth = $state(500);
 
@@ -185,20 +188,9 @@
         class="shadow-xl"
       />
       <!-- Device / lock icon -->
-      <svg
-        x="-12"
-        y="-12"
-        width="24"
-        height="24"
-        fill="none"
-        stroke="#8b5cf6"
-        stroke-width="2"
-        stroke-linecap="round"
-        stroke-linejoin="round"
-      >
-        <rect x="3" y="11" width="18" height="10" rx="2"></rect>
-        <path d="M7 11V7a5 5 0 0110 0v4"></path>
-      </svg>
+      <text x="0" y="8" text-anchor="middle" font-size="20">
+        {networkIcon}
+      </text>
     </g>
   </svg>
 

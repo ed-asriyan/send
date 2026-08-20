@@ -14,6 +14,11 @@
     FinalDownloadPlan,
     XftpServer,
   } from "./lib/models";
+  import {
+    getCurrentNetworkMode,
+    NetworkMode,
+    NetworkIcons,
+  } from "./lib/networkMode";
   import AmbientBackground from "./components/AmbientBackground.svelte";
   import Header from "./components/Header.svelte";
   import SettingsModal from "./components/SettingsModal.svelte";
@@ -375,7 +380,28 @@
       alert(get(_)("app.add_server_error", { values: { error: err.message } }));
     }
   }
+
+  const networkMode = getCurrentNetworkMode();
 </script>
+
+<svelte:head>
+  <title>
+    {$_("title")} — {$_("subtitle")}
+  </title>
+  {#if networkMode === NetworkMode.Tor}
+    <link rel="icon" type="image/svg+xml" href="/favicon-tor.svg" />
+    <link rel="apple-touch-icon" href="/icon-tor-192.png" />
+    <link rel="manifest" href="/manifest-tor.json" />
+  {:else if networkMode === NetworkMode.Yggdrasil}
+    <link rel="icon" type="image/svg+xml" href="/favicon-yggdrasil.svg" />
+    <link rel="apple-touch-icon" href="/icon-yggdrasil-192.png" />
+    <link rel="manifest" href="/manifest-yggdrasil.json" />
+  {:else}
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/icon-192.png" />
+    <link rel="manifest" href="/manifest.json" />
+  {/if}
+</svelte:head>
 
 <AmbientBackground />
 
@@ -422,7 +448,10 @@
               {#if hasAvailableServers}
                 <UploadView onUpload={handleUpload} />
               {:else}
-                <NoServersView hasServers={servers.length > 0} onOpenSettings={() => (isSettingsModalOpen = true)} />
+                <NoServersView
+                  hasServers={servers.length > 0}
+                  onOpenSettings={() => (isSettingsModalOpen = true)}
+                />
               {/if}
             {:else if currentView === "progress"}
               <ProgressView
@@ -474,9 +503,15 @@
       <div
         class="mt-8 md:mt-12 flex flex-col md:flex-row items-center gap-1.5 md:gap-3 w-full justify-center shrink-0 z-10"
       >
-        <button type="button" onclick={() => (isSettingsModalOpen = true)} class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:text-slate-700 hover:bg-white/40 transition-colors duration-300 cursor-pointer text-xs font-medium text-slate-500 outline-none">
+        <button
+          type="button"
+          onclick={() => (isSettingsModalOpen = true)}
+          class="flex items-center gap-2 px-3 py-1.5 rounded-full hover:text-slate-700 hover:bg-white/40 transition-colors duration-300 cursor-pointer text-xs font-medium text-slate-500 outline-none"
+        >
           {#if hasAvailableServers}
-            <div class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+            <div
+              class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"
+            ></div>
             <span>{$_("app.network_connected")}</span>
           {:else}
             <div class="w-2 h-2 rounded-full bg-slate-300"></div>

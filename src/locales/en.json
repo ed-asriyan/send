@@ -1,5 +1,6 @@
 {
   "title": "Send",
+  "subtitle": "Secure & Private File Sharing",
   "app": {
     "initializing": "Initializing...",
     "locating_map": "Getting metadata...",
