@@ -14,7 +14,7 @@ import {
   compatibleVRange
 } from "./protocol/handshake.js"
 import {verifyIdentityProof} from "./crypto/identity.js"
-import {generateX25519KeyPair, encodePubKeyX25519, dh} from "./crypto/keys.js"
+import {generateX25519KeyPair, encodePubKeyX25519, dh, getRandomValues} from "./crypto/keys.js"
 import {
   encodeFNEW, encodeFADD, encodeFPUT, encodeFGET, encodeFDEL, encodePING,
   decodeResponse, type FileResponse, type FileInfo, type XFTPErrorType
@@ -252,7 +252,7 @@ async function connectXFTP(server: XFTPServer, config?: Partial<TransportConfig>
   try {
     // Step 1: send client hello with web challenge
     const challenge = new Uint8Array(32)
-    crypto.getRandomValues(challenge)
+    getRandomValues(challenge)
     const clientHelloBytes = encodeClientHello({webChallenge: challenge})
     const shsBody = await transport.post(clientHelloBytes, {"xftp-web-hello": "1"})
 

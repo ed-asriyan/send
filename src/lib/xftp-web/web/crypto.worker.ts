@@ -3,10 +3,11 @@ import {encryptFile, encodeFileHeader, decryptChunks} from '../src/crypto/file.j
 import {sha512Streaming} from '../src/crypto/digest.js'
 import {prepareChunkSizes, fileSizeLen, authTagSize} from '../src/protocol/chunks.js'
 import {decryptReceivedChunk} from '../src/download.js'
+import { randomUUID, getRandomValues } from '../src/crypto/keys.js'
 
 // ── OPFS session management ─────────────────────────────────────
 
-const SESSION_DIR = `session-${Date.now()}-${crypto.randomUUID()}`
+const SESSION_DIR = `session-${Date.now()}-${randomUUID()}`
 let uploadReadHandle: FileSystemSyncAccessHandle | null = null
 let downloadWriteHandle: FileSystemSyncAccessHandle | null = null
 const chunkMeta = new Map<number, {offset: number, size: number}>()
@@ -51,8 +52,8 @@ async function handleEncrypt(id: number, data: ArrayBuffer, fileName: string) {
   const source = new Uint8Array(data)
   const key = new Uint8Array(32)
   const nonce = new Uint8Array(24)
-  crypto.getRandomValues(key)
-  crypto.getRandomValues(nonce)
+  getRandomValues(key)
+  getRandomValues(nonce)
   const fileHdr = encodeFileHeader({fileName, fileExtra: null})
   const fileSize = BigInt(fileHdr.length + source.length)
   const payloadSize = Number(fileSize) + fileSizeLen + authTagSize

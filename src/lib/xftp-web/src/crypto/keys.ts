@@ -6,6 +6,28 @@ import {ed448} from "@noble/curves/ed448.js"
 import {sha256} from "./digest.js"
 import {concatBytes} from "../protocol/encoding.js"
 
+// -- Randomness
+
+export function getRandomValues(buf: Uint8Array): void {
+  if (typeof crypto !== "undefined" && crypto.getRandomValues) {
+    crypto.getRandomValues(buf)
+  } else {
+    buf.set(sodium.randombytes_buf(buf.length))
+  }
+}
+
+export function randomUUID(): string {
+  if (typeof crypto !== "undefined" && crypto.randomUUID) {
+    return crypto.randomUUID()
+  }
+  const buf = new Uint8Array(16)
+  getRandomValues(buf)
+  buf[6] = (buf[6] & 0x0f) | 0x40 // Version 4
+  buf[8] = (buf[8] & 0x3f) | 0x80 // Variant 10
+  const hex = Array.from(buf).map(b => b.toString(16).padStart(2, '0')).join('')
+  return `${hex.slice(0,8)}-${hex.slice(8,12)}-${hex.slice(12,16)}-${hex.slice(16,20)}-${hex.slice(20,32)}`
+}
+
 // -- Ed25519 key generation (Crypto.hs:726 generateAuthKeyPair)
 
 export interface Ed25519KeyPair {

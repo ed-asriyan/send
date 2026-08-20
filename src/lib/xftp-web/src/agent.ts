@@ -4,7 +4,10 @@
 // file descriptions, and DEFLATE-compressed URI encoding.
 
 import {encryptFile, encodeFileHeader} from "./crypto/file.js"
-import {generateEd25519KeyPair, encodePubKeyEd25519, encodePrivKeyEd25519, decodePrivKeyEd25519, ed25519KeyPairFromSeed} from "./crypto/keys.js"
+import {
+  generateEd25519KeyPair, encodePubKeyEd25519, encodePrivKeyEd25519,
+  decodePrivKeyEd25519, ed25519KeyPairFromSeed, getRandomValues
+} from "./crypto/keys.js"
 import {sha512Streaming} from "./crypto/digest.js"
 import {prepareChunkSizes, prepareChunkSpecs, getChunkDigest, fileSizeLen, authTagSize} from "./protocol/chunks.js"
 import {
@@ -271,8 +274,8 @@ export function decodeDescriptionURI(fragment: string): FileDescription {
 export function encryptFileForUpload(source: Uint8Array, fileName: string): EncryptedFileInfo {
   const key = new Uint8Array(32)
   const nonce = new Uint8Array(24)
-  crypto.getRandomValues(key)
-  crypto.getRandomValues(nonce)
+  getRandomValues(key)
+  getRandomValues(nonce)
   const fileHdr = encodeFileHeader({fileName, fileExtra: null})
   const fileSize = BigInt(fileHdr.length + source.length)
   const payloadSize = Number(fileSize) + fileSizeLen + authTagSize
