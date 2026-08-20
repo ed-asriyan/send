@@ -92,7 +92,7 @@
   let confirmFileName = $state<string | null>(null);
   let confirmTitle = $derived(confirmFileName || $_("app.unknown_file"));
   let confirmDesc = $state("");
-  let confirmServers = $state<string[]>([]);
+  let confirmServers = $state<XftpServerAddress[]>([]);
   let confirmAction = $state<() => void | Promise<void>>(() => {});
 
   let useCommunityServers = $state<boolean>(community.isEnabled);
@@ -275,7 +275,7 @@
         finalPlan.filename || null,
         sizeFormatted ? `~ ${sizeFormatted} total` : "",
 
-        finalPlan.addresses.map((a) => a.server.url.host),
+        finalPlan.addresses.map((a) => a.server),
         async () => {
           await startDownload(finalPlan);
         },
@@ -289,7 +289,7 @@
   function showConfirmDialog(
     filename: string | null,
     desc: string,
-    srvs: string[],
+    srvs: XftpServerAddress[],
     onConfirm: () => void | Promise<void>,
   ) {
     confirmFileName = filename;
