@@ -36,14 +36,19 @@ export function parseXFTPServer(address: string): XFTPServer {
   // Take the first host (before any comma), then split port from that
   const firstHost = hostPart.split(',')[0]
   const colonIdx = firstHost.lastIndexOf(':')
+  const bracketIdx = firstHost.lastIndexOf(']')
   let host: string
   let port: string
-  if (colonIdx > 0) {
+  if (colonIdx > bracketIdx) {
     host = firstHost.substring(0, colonIdx)
     port = firstHost.substring(colonIdx + 1)
   } else {
     host = firstHost
-    port = "443"
+    const _darknet = host.endsWith('.onion') || 
+                     host.endsWith('.i2p') || 
+                     host.endsWith('.ygg') || 
+                     /^\[?0?[23][0-9a-f]{2}:/i.test(host)
+    port = _darknet ? "80" : "443"
   }
   return {keyHash, host, port}
 }
