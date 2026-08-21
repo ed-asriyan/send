@@ -214,7 +214,7 @@
         .finally(() => loadServers()),
     );
 
-    const timeout = isSharedRoute ? 3500 : 350;
+    const timeout = isSharedRoute ? 3500 : 1000;
 
     await Promise.race([
       Promise.all(checks),
